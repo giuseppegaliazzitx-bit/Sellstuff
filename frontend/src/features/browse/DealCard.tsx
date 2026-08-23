@@ -21,6 +21,11 @@ export function DealCard({ deal, search }: { deal: DealPublic; search?: string }
             Reduced
           </span>
         ) : null}
+        {deal.early_access ? (
+          <span className="absolute right-2 top-8 rounded bg-header px-2 py-0.5 text-xs text-white">
+            Early access
+          </span>
+        ) : null}
         {deal.offers_due_at ? (
           <span className="absolute right-2 top-2 rounded bg-gold px-2 py-0.5 text-xs text-white">
             Offers due

@@ -22,6 +22,7 @@ class RegisterIn(BaseModel):
 class LoginIn(BaseModel):
     email: EmailStr
     password: str
+    totp_code: str | None = None
 
 
 class ForgotIn(BaseModel):
@@ -50,6 +51,8 @@ class UserOut(BaseModel):
     email_verified: bool
     terms_accepted: bool
     terms_version: str | None = None
+    totp_enrolled: bool = False
+    totp_required: bool = False
 
 
 class SessionOut(BaseModel):
@@ -113,6 +116,26 @@ class BuyBoxPut(BaseModel):
     max_price_cents: int | None = None
     markets: list[str] = []
     asset_types: list[str] = []
+
+
+class TotpBeginIn(BaseModel):
+    password: str
+
+
+class TotpConfirmIn(BaseModel):
+    password: str
+    secret: str
+    code: str
+
+
+class TotpDisableIn(BaseModel):
+    password: str
+    code: str
+
+
+class ChangePasswordIn(BaseModel):
+    current_password: str
+    new_password: str
 
 
 class BuyerPatch(BaseModel):

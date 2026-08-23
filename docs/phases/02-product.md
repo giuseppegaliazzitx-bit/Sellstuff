@@ -13,8 +13,9 @@ Shipped together on `phase/02-product` so the laptop has a working desk without 
 | 8 | Interest, offers (TX ack gate), showing windows |
 | 9 | Track/unsub JWT endpoints (blasts UI later) |
 | 10 | Metrics overview + contract-clock board |
-| 11 | CSP + nosniff headers; preview-as-client = DealPublic page |
+| 11 | CSP + nosniff headers; preview-as-client = DealPublic page; TOTP enroll/login; ADMIN_REQUIRE_2FA |
 | 12 | Compose files from Phase 0 still apply |
+| extra | IMAP ingest + unmatched queue, early-access window, landing page, video embed |
 
 ## Green-run
 

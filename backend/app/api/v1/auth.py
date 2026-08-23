@@ -24,6 +24,7 @@ from app.models import User
 from app.schemas.auth import (
     AcceptTermsIn,
     BuyBoxPut,
+    ChangePasswordIn,
     ForgotIn,
     LoginIn,
     ProfileOut,
@@ -31,6 +32,9 @@ from app.schemas.auth import (
     RegisterIn,
     ResetIn,
     SessionOut,
+    TotpBeginIn,
+    TotpConfirmIn,
+    TotpDisableIn,
     UserOut,
     VerifyEmailIn,
 )
@@ -86,6 +90,7 @@ async def login(
         password=payload.password,
         ip=client_ip(request),
         user_agent=_ua(request),
+        totp_code=payload.totp_code,
     )
     set_auth_cookies(response, settings, access=access, refresh=refresh, csrf=csrf)
     return auth_service.user_out(user, settings)
@@ -218,6 +223,81 @@ async def delete_session(
 ) -> dict[str, bool]:
     enforce_csrf(request)
     await auth_service.revoke_session(session, user.id, session_id)
+    return {"ok": True}
+
+
+@router.post("/sessions/revoke-all")
+async def revoke_all(
+    request: Request,
+    pair: tuple[User, dict] = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> dict[str, bool]:
+    enforce_csrf(request)
+    user, claims = pair
+    await auth_service.revoke_all_sessions(session, user.id, keep_family=str(claims.get("sid", "")))
+    return {"ok": True}
+
+
+@router.post("/change-password")
+async def change_password(
+    payload: ChangePasswordIn,
+    request: Request,
+    user: User = Depends(require_user),
+    session: AsyncSession = Depends(get_db),
+    kv: KV = Depends(get_kv),
+) -> dict[str, bool]:
+    enforce_csrf(request)
+    await auth_service.change_password(
+        session,
+        kv,
+        user,
+        current_password=payload.current_password,
+        new_password=payload.new_password,
+    )
+    return {"ok": True}
+
+
+@router.post("/totp/begin")
+async def totp_begin(
+    payload: TotpBeginIn,
+    user: User = Depends(require_user),
+    settings: Settings = Depends(get_settings_dep),
+) -> dict[str, str]:
+    from app.services.totp import begin_enroll
+
+    return await begin_enroll(settings, user, payload.password)
+
+
+@router.post("/totp/confirm")
+async def totp_confirm(
+    payload: TotpConfirmIn,
+    user: User = Depends(require_user),
+    session: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings_dep),
+) -> dict:
+    from app.services.totp import confirm_enroll
+
+    codes = await confirm_enroll(
+        session,
+        settings,
+        user,
+        password=payload.password,
+        secret=payload.secret,
+        code=payload.code,
+    )
+    return {"recovery_codes": codes, "enrolled": True}
+
+
+@router.post("/totp/disable")
+async def totp_disable(
+    payload: TotpDisableIn,
+    user: User = Depends(require_user),
+    session: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings_dep),
+) -> dict[str, bool]:
+    from app.services.totp import disable_totp
+
+    await disable_totp(session, settings, user, password=payload.password, code=payload.code)
     return {"ok": True}
 
 

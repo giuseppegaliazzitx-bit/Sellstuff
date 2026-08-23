@@ -44,6 +44,7 @@ class DealPublic(BaseModel):
     price_history: list[PriceHistoryPublic] = Field(default_factory=list)
     reduced_cents: int | None = None
     saved: bool = False
+    early_access: bool = False
 
 
 class DealAdmin(DealPublic):
@@ -62,6 +63,7 @@ class DealAdmin(DealPublic):
     jv_fee_split_pct: int | None = None
     hud_fmr_cents: int | None = None
     days_to_close: int | None = None
+    early_access_until: datetime | None = None
 
 
 class DealCreate(BaseModel):
@@ -93,6 +95,7 @@ class DealCreate(BaseModel):
     option_period_ends_at: datetime | None = None
     lockbox_code: str = ""
     status: str = "coming_soon"
+    early_access_until: datetime | None = None
 
     @field_validator("list_price_cents", "arv_cents")
     @classmethod
@@ -120,6 +123,15 @@ class DealPatch(BaseModel):
     lng: float | None = None
     occupancy: str | None = None
     access: str | None = None
+    early_access_until: datetime | None = None
+    property_type: str | None = None
+    beds: int | None = None
+    baths: float | None = None
+    sqft: int | None = None
+    year_built: int | None = None
+    deal_structure: str | None = None
+    contract_executed_at: datetime | None = None
+    option_period_ends_at: datetime | None = None
 
 
 class MapPin(BaseModel):

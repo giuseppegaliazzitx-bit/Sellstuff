@@ -16,6 +16,8 @@ export function BrowsePage() {
   const sort = params.get("sort") || "newest";
   const priceMax = params.get("price_max") || "";
   const bedsMin = params.get("beds_min") || "";
+  const occupancy = params.get("occupancy") || "";
+  const propertyType = params.get("property_type") || "";
 
   useEffect(() => {
     apiJson<MarketOut[]>("/api/v1/markets").then(setMarkets).catch(() => setMarkets([]));
@@ -29,10 +31,12 @@ export function BrowsePage() {
     q.set("sort", sort);
     if (priceMax) q.set("price_max", priceMax);
     if (bedsMin) q.set("beds_min", bedsMin);
+    if (occupancy) q.set("occupancy", occupancy);
+    if (propertyType) q.set("property_type", propertyType);
     const qs = q.toString();
     apiJson<DealPublic[]>(`/api/v1/deals?${qs}`).then(setDeals).catch(() => setDeals([]));
     apiJson<MapPin[]>(`/api/v1/map/pins?${qs}`).then(setPins).catch(() => setPins([]));
-  }, [markets, market, sort, priceMax, bedsMin]);
+  }, [markets, market, sort, priceMax, bedsMin, occupancy, propertyType]);
 
   const search = `?${params.toString()}`;
 
@@ -82,6 +86,35 @@ export function BrowsePage() {
               setParams(next);
             }}
           />
+          <select
+            value={occupancy}
+            onChange={(e) => {
+              const next = new URLSearchParams(params);
+              if (e.target.value) next.set("occupancy", e.target.value);
+              else next.delete("occupancy");
+              setParams(next);
+            }}
+            className="rounded border px-2 py-1"
+          >
+            <option value="">Occupancy</option>
+            <option value="vacant">Vacant</option>
+            <option value="occupied">Occupied</option>
+          </select>
+          <select
+            value={propertyType}
+            onChange={(e) => {
+              const next = new URLSearchParams(params);
+              if (e.target.value) next.set("property_type", e.target.value);
+              else next.delete("property_type");
+              setParams(next);
+            }}
+            className="rounded border px-2 py-1"
+          >
+            <option value="">Type</option>
+            <option value="SFR">SFR</option>
+            <option value="2-4">2-4</option>
+            <option value="multifamily">Multifamily</option>
+          </select>
           <label>
             Sort{" "}
             <select

@@ -15,7 +15,10 @@ interface Profile {
 }
 
 export function SettingsPage() {
-  const [tab, setTab] = useState<"profile" | "box" | "sessions">("profile");
+  const initial = new URLSearchParams(window.location.search).get("tab");
+  const [tab, setTab] = useState<"profile" | "box" | "sessions" | "security">(
+    initial === "2fa" || initial === "security" ? "security" : "profile",
+  );
   const [p, setP] = useState<Profile | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -29,7 +32,7 @@ export function SettingsPage() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="text-2xl font-semibold">Settings</h1>
       <div className="mt-4 flex gap-2 text-sm">
-        {(["profile", "box", "sessions"] as const).map((t) => (
+        {(["profile", "box", "sessions", "security"] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -122,6 +125,92 @@ export function SettingsPage() {
         </form>
       ) : null}
       {tab === "sessions" ? <SessionsPage /> : null}
+      {tab === "security" ? <SecurityPanel /> : null}
+    </div>
+  );
+}
+
+function SecurityPanel() {
+  const [msg, setMsg] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
+  const [otpauth, setOtpauth] = useState<string | null>(null);
+  const [codes, setCodes] = useState<string[] | null>(null);
+
+  return (
+    <div className="mt-6 max-w-md space-y-6 text-sm">
+      {msg ? <p className="text-gold">{msg}</p> : null}
+      <form
+        className="flex flex-col gap-2 rounded border bg-white p-4"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          try {
+            await apiJson("/api/v1/auth/change-password", {
+              method: "POST",
+              body: JSON.stringify({
+                current_password: String(fd.get("current")),
+                new_password: String(fd.get("next")),
+              }),
+            });
+            setMsg("Password changed. Other sessions were revoked.");
+          } catch (err) {
+            setMsg(err instanceof Error ? err.message : "Failed");
+          }
+        }}
+      >
+        <p className="font-medium">Change password</p>
+        <input name="current" type="password" required placeholder="Current" className="rounded border px-2 py-1" />
+        <input name="next" type="password" required placeholder="New" className="rounded border px-2 py-1" />
+        <button type="submit" className="rounded bg-header px-3 py-1 text-white">
+          Update password
+        </button>
+      </form>
+      <form
+        className="flex flex-col gap-2 rounded border bg-white p-4"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          const password = String(fd.get("password"));
+          try {
+            if (!secret) {
+              const began = await apiJson<{ secret: string; otpauth_url: string }>("/api/v1/auth/totp/begin", {
+                method: "POST",
+                body: JSON.stringify({ password }),
+              });
+              setSecret(began.secret);
+              setOtpauth(began.otpauth_url);
+              setMsg("Scan the secret in your authenticator, then enter a code.");
+              return;
+            }
+            const done = await apiJson<{ recovery_codes: string[] }>("/api/v1/auth/totp/confirm", {
+              method: "POST",
+              body: JSON.stringify({ password, secret, code: String(fd.get("code")) }),
+            });
+            setCodes(done.recovery_codes);
+            setMsg("Two-factor enrolled. Store these recovery codes — they are shown once.");
+          } catch (err) {
+            setMsg(err instanceof Error ? err.message : "Failed");
+          }
+        }}
+      >
+        <p className="font-medium">Authenticator (TOTP)</p>
+        {otpauth ? <p className="break-all text-xs text-neutral-500">{otpauth}</p> : null}
+        {secret ? <p className="font-mono text-xs">{secret}</p> : null}
+        <input name="password" type="password" required placeholder="Account password" className="rounded border px-2 py-1" />
+        {secret ? (
+          <input name="code" required placeholder="6-digit code" className="rounded border px-2 py-1" />
+        ) : null}
+        <button type="submit" className="rounded bg-gold px-3 py-1 font-semibold text-white">
+          {secret ? "Confirm enrollment" : "Start enrollment"}
+        </button>
+      </form>
+      {codes ? (
+        <ul className="rounded border bg-white p-4 font-mono text-xs">
+          {codes.map((c) => (
+            <li key={c}>{c}</li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

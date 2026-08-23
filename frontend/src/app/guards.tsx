@@ -53,5 +53,8 @@ export function RequireAdmin() {
       </div>
     );
   }
+  if (user.totp_required) {
+    return <Navigate to="/app/settings?tab=2fa" replace />;
+  }
   return <Outlet />;
 }

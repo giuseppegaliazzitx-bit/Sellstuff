@@ -25,6 +25,8 @@ export interface AuthUser {
   email_verified: boolean;
   terms_accepted: boolean;
   terms_version: string | null;
+  totp_enrolled?: boolean;
+  totp_required?: boolean;
 }
 
 export interface BuyerRow {
@@ -83,6 +85,7 @@ export interface DealPublic {
   price_history: { old_cents: number; new_cents: number; at: string }[];
   reduced_cents: number | null;
   saved: boolean;
+  early_access?: boolean;
 }
 
 export interface DealAdmin extends DealPublic {
@@ -94,6 +97,7 @@ export interface DealAdmin extends DealPublic {
   deal_structure: string;
   contract_close_by: string | null;
   days_to_close: number | null;
+  early_access_until?: string | null;
 }
 
 export interface MapPin {

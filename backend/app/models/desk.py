@@ -245,3 +245,31 @@ class GeocodeCache(Base):
     lat: Mapped[float] = mapped_column(Float)
     lng: Mapped[float] = mapped_column(Float)
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class TotpRecoveryCode(Base):
+    __tablename__ = "totp_recovery_codes"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class EmailLink(Base):
+    __tablename__ = "email_links"
+    __table_args__ = (UniqueConstraint("message_id", name="uq_email_message_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    message_id: Mapped[str] = mapped_column(String(300))
+    imap_uid: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    thread_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("threads.id"), nullable=True)
+    user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    deal_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("deals.id"), nullable=True)
+    from_addr: Mapped[str] = mapped_column(String(320), default="")
+    subject: Mapped[str] = mapped_column(String(300), default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    unmatched: Mapped[bool] = mapped_column(Boolean, default=False)
+    bounce: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

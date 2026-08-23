@@ -88,10 +88,10 @@ export function fetchMe(): Promise<AuthUser> {
   return apiJson<AuthUser>("/api/v1/auth/me");
 }
 
-export function loginRequest(email: string, password: string): Promise<AuthUser> {
+export function loginRequest(email: string, password: string, totpCode?: string): Promise<AuthUser> {
   return apiJson<AuthUser>("/api/v1/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, totp_code: totpCode || undefined }),
   });
 }
 

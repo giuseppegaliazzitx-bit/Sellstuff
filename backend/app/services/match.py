@@ -61,9 +61,17 @@ async def notify_matches(session: AsyncSession, deal: Deal) -> int:
         deal.market = market
     count = 0
     now = datetime.now(UTC)
+    until = deal.early_access_until
+    if until is not None and until.tzinfo is None:
+        until = until.replace(tzinfo=UTC)
+    early = bool(until and until > now)
     for user in users:
         if not buy_box_matches(deal, user):
             continue
+        if early:
+            tier = user.profile.tier if user.profile else "C"
+            if tier != "A":
+                continue
         session.add(
             Notification(
                 id=new_id(),

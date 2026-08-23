@@ -6,7 +6,7 @@ interface AuthState {
   user: AuthUser | null;
   ready: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<AuthUser>;
+  login: (email: string, password: string, totpCode?: string) => Promise<AuthUser>;
   register: (payload: Record<string, unknown>) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<AuthUser | null>;
@@ -38,9 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser().finally(() => setReady(true));
   }, [refreshUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, totpCode?: string) => {
     setError(null);
-    const me = await loginRequest(email, password);
+    const me = await loginRequest(email, password, totpCode);
     setUser(me);
     return me;
   }, []);
@@ -89,6 +89,7 @@ export function useAuth(): AuthState {
 
 export function pathAfterLogin(user: AuthUser): string {
   if (user.status === "pending") return "/waiting";
+  if (user.totp_required) return "/app/settings?tab=2fa";
   if (user.role === "admin") return "/admin/buyers";
   return "/app/browse";
 }

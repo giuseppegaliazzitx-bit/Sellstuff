@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from urllib.parse import urlparse
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import Settings
 from app.core.errors import AppError
 from app.models import (
     AuditLog,
@@ -81,6 +82,8 @@ def to_public(deal: Deal, *, saved: bool = False) -> DealPublic:
         if row.new_cents < row.old_cents:
             reductions.append(PriceHistoryPublic(old_cents=row.old_cents, new_cents=row.new_cents, at=row.at))
             reduced = row.old_cents - row.new_cents
+    until = _aware(deal.early_access_until)
+    early = bool(until and until > _now())
     return DealPublic(
         id=deal.id,
         market_id=deal.market_id,
@@ -110,6 +113,7 @@ def to_public(deal: Deal, *, saved: bool = False) -> DealPublic:
         price_history=reductions,
         reduced_cents=reduced,
         saved=saved,
+        early_access=early,
     )
 
 
@@ -136,6 +140,7 @@ def to_admin(deal: Deal) -> DealAdmin:
         jv_fee_split_pct=deal.jv_fee_split_pct,
         hud_fmr_cents=deal.hud_fmr_cents,
         days_to_close=days,
+        early_access_until=deal.early_access_until,
     )
 
 
@@ -254,7 +259,14 @@ async def create_deal(session: AsyncSession, payload: DealCreate, actor_id: str)
     return await get_deal(session, deal.id)
 
 
-async def patch_deal(session: AsyncSession, deal: Deal, payload: DealPatch, actor_id: str, ip: str = "") -> Deal:
+async def patch_deal(
+    session: AsyncSession,
+    deal: Deal,
+    payload: DealPatch,
+    actor_id: str,
+    ip: str = "",
+    settings: Settings | None = None,
+) -> Deal:
     now = _now()
     data = payload.model_dump(exclude_unset=True)
     diffs: dict = {}
@@ -289,6 +301,9 @@ async def patch_deal(session: AsyncSession, deal: Deal, payload: DealPatch, acto
                 raise AppError(422, "photo_required", "Publish requires at least one photo")
             if deal.published_at is None:
                 deal.published_at = now
+                hours = settings.early_access_default_hours if settings else 0
+                if deal.early_access_until is None and hours > 0 and "early_access_until" not in data:
+                    deal.early_access_until = now + timedelta(hours=hours)
             notify = True
         diffs["status"] = [deal.status, data["status"]]
     if "lockbox_code" in data:

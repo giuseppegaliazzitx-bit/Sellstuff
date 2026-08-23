@@ -59,6 +59,8 @@ def user_out(user: User, settings: Settings) -> UserOut:
     if user.terms:
         latest = max(user.terms, key=lambda row: row.accepted_at)
     accepted = latest is not None and latest.terms_version == settings.terms_version
+    enrolled = bool(user.totp_secret)
+    needs = bool(settings.admin_require_2fa and user.role == "admin" and not enrolled)
     return UserOut(
         id=user.id,
         email=user.email,
@@ -68,6 +70,8 @@ def user_out(user: User, settings: Settings) -> UserOut:
         email_verified=user.email_verified_at is not None,
         terms_accepted=accepted,
         terms_version=latest.terms_version if latest else None,
+        totp_enrolled=enrolled,
+        totp_required=needs,
     )
 
 
@@ -222,6 +226,7 @@ async def login_user(
     password: str,
     ip: str,
     user_agent: str,
+    totp_code: str | None = None,
 ) -> tuple[User, str, str, str]:
     if not limiter.allow(f"login:{ip}", LOGIN_LIMIT, LOGIN_WINDOW):
         raise AppError(429, "rate_limited", "Too many login attempts")
@@ -236,6 +241,14 @@ async def login_user(
         raise INVALID_CREDENTIALS
     if user.status in {"suspended", "rejected"}:
         raise AppError(403, "account_disabled", "This account is disabled")
+    if user.totp_secret:
+        if not totp_code:
+            raise AppError(401, "totp_required", "Two-factor code required")
+        from app.services.totp import verify_user_factor
+
+        ok = await verify_user_factor(session, settings, user, totp_code)
+        if not ok:
+            raise AppError(401, "totp_invalid", "Invalid authenticator code")
     user.last_login_at = _now()
     access, refresh, csrf, row = create_session_tokens(settings, user, ip=ip, user_agent=user_agent)
     session.add(row)
@@ -435,6 +448,40 @@ async def revoke_session(session: AsyncSession, user_id: str, token_id: str) -> 
     if row is None:
         raise AppError(404, "not_found", "Session not found")
     await _revoke_family(session, row.family_id)
+    await session.commit()
+
+
+async def revoke_all_sessions(session: AsyncSession, user_id: str, *, keep_family: str | None = None) -> None:
+    rows = (await session.execute(select(RefreshToken).where(RefreshToken.user_id == user_id))).scalars().all()
+    now = _now()
+    for row in rows:
+        if keep_family and row.family_id == keep_family:
+            continue
+        if row.revoked_at is None:
+            row.revoked_at = now
+    await session.commit()
+
+
+async def change_password(
+    session: AsyncSession,
+    kv: KV,
+    user: User,
+    *,
+    current_password: str,
+    new_password: str,
+) -> None:
+    if not verify_password(current_password, user.password_hash):
+        raise INVALID_CREDENTIALS
+    try:
+        user.password_hash = hash_password(new_password)
+    except PasswordError as exc:
+        raise AppError(422, exc.code, str(exc)) from exc
+    await bump_ver(session, kv, user)
+    rows = (await session.execute(select(RefreshToken).where(RefreshToken.user_id == user.id))).scalars().all()
+    now = _now()
+    for row in rows:
+        if row.revoked_at is None:
+            row.revoked_at = now
     await session.commit()
 
 

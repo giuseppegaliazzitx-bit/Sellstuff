@@ -4,6 +4,7 @@ from app.models.desk import (
     BlastRecipient,
     ContactEvent,
     DealAcknowledgment,
+    EmailLink,
     Event,
     GeocodeCache,
     ImportedBuyer,
@@ -18,6 +19,7 @@ from app.models.desk import (
     ShowingWindow,
     Thread,
     ThreadParticipant,
+    TotpRecoveryCode,
     UserNote,
 )
 from app.models.identity import BuyerProfile, RefreshToken, TermsAcceptance, User, new_id
@@ -43,6 +45,7 @@ __all__ = [
     "DealPhoto",
     "DealPriceHistory",
     "DealStatusHistory",
+    "EmailLink",
     "Event",
     "GeocodeCache",
     "ImportedBuyer",
@@ -61,6 +64,7 @@ __all__ = [
     "TermsAcceptance",
     "Thread",
     "ThreadParticipant",
+    "TotpRecoveryCode",
     "User",
     "UserNote",
     "new_id",

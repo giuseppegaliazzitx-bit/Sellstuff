@@ -8,7 +8,7 @@ export function Header() {
   const cfg = useConfig();
   const { user, logout } = useAuth();
   const [unread, setUnread] = useState(0);
-  const home = !user ? "/login" : user.status === "pending" ? "/waiting" : "/app/browse";
+  const home = !user ? "/" : user.status === "pending" ? "/waiting" : "/app/browse";
 
   useEffect(() => {
     if (!user || user.status !== "active") return;

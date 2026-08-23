@@ -32,6 +32,7 @@ const deal: DealPublic = {
   price_history: [{ old_cents: 7490000, new_cents: 6990000, at: "2026-08-20T00:00:00Z" }],
   reduced_cents: 500000,
   saved: false,
+  early_access: false,
 };
 
 test("card shows price and chips, never ARV or rehab", () => {

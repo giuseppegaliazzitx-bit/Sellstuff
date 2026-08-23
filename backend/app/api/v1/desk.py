@@ -11,8 +11,12 @@ from app.core.deps import get_db, require_active, require_admin, require_user
 from app.core.errors import AppError
 from app.core.security import TokenError, decode_jwt
 from app.models import (
+    ContactEvent,
     Deal,
     DealAcknowledgment,
+    EmailLink,
+    Event,
+    MailboxState,
     Message,
     Notification,
     Offer,
@@ -197,6 +201,27 @@ async def my_notes(
         }
         for n in rows
     ]
+
+
+@router.post("/me/notifications/read-all")
+async def read_all_notes(
+    user: User = Depends(require_user),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    rows = (
+        (
+            await session.execute(
+                select(Notification).where(Notification.user_id == user.id, Notification.read_at.is_(None))
+            )
+        )
+        .scalars()
+        .all()
+    )
+    now = _now()
+    for row in rows:
+        row.read_at = now
+    await session.commit()
+    return {"ok": True, "n": len(rows)}
 
 
 @router.post("/me/notifications/{nid}/read")
@@ -493,14 +518,132 @@ async def mail_status(
 ) -> dict:
     settings = request.app.state.settings
     dead = (await session.execute(select(func.count()).where(Outbox.dead_at.is_not(None)))).scalar_one()
+    state = (await session.execute(select(MailboxState).where(MailboxState.id == "singleton"))).scalar_one_or_none()
     return {
         "configured": settings.mail_configured,
         "sandbox": not settings.mail_configured,
-        "sent_today": 0,
+        "sent_today": state.sent_today if state else 0,
         "daily_limit": settings.mail_daily_limit,
         "dead_letters": int(dead or 0),
-        "last_error": "",
+        "last_error": state.last_error if state else "",
+        "last_imap_uid": state.last_imap_uid if state else 0,
+        "last_sync_at": state.last_sync_at.isoformat() if state and state.last_sync_at else None,
+        "brand_name": settings.public_brand_name,
+        "brand_tagline": settings.public_brand_tagline,
+        "mailing_address": settings.public_mailing_address,
     }
+
+
+@router.post("/admin/mail/ingest")
+async def mail_ingest(
+    payload: dict,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    from app.services.imap_inbound import ingest_inbound
+
+    link = await ingest_inbound(session, payload)
+    return {
+        "id": link.id,
+        "unmatched": link.unmatched,
+        "bounce": link.bounce,
+        "thread_id": link.thread_id,
+        "user_id": link.user_id,
+    }
+
+
+@router.get("/admin/mail/unmatched")
+async def mail_unmatched(
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    rows = (
+        (
+            await session.execute(
+                select(EmailLink).where(EmailLink.unmatched.is_(True)).order_by(EmailLink.created_at.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return [
+        {
+            "id": r.id,
+            "from_addr": r.from_addr,
+            "subject": r.subject,
+            "body": r.body,
+            "created_at": r.created_at.isoformat(),
+        }
+        for r in rows
+    ]
+
+
+@router.post("/admin/mail/{link_id}/link")
+async def mail_link(
+    link_id: str,
+    payload: dict,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    from app.services.imap_inbound import link_unmatched
+
+    link = await link_unmatched(
+        session,
+        link_id,
+        user_id=payload.get("user_id"),
+        deal_id=payload.get("deal_id"),
+        thread_id=payload.get("thread_id"),
+    )
+    return {"id": link.id, "thread_id": link.thread_id, "unmatched": link.unmatched}
+
+
+@router.get("/admin/users/{user_id}/activity")
+async def buyer_activity(
+    user_id: str,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    events = (
+        (await session.execute(select(Event).where(Event.user_id == user_id).order_by(Event.at.desc()).limit(50)))
+        .scalars()
+        .all()
+    )
+    contacts = (
+        (
+            await session.execute(
+                select(ContactEvent).where(ContactEvent.user_id == user_id).order_by(ContactEvent.at.desc()).limit(50)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    offers = (await session.execute(select(Offer).where(Offer.user_id == user_id))).scalars().all()
+    out = [
+        {"kind": "event", "name": e.name, "deal_id": e.deal_id, "at": e.at.isoformat(), "payload": e.payload}
+        for e in events
+    ]
+    out.extend(
+        {
+            "kind": "contact",
+            "name": c.kind,
+            "deal_id": c.deal_id,
+            "at": c.at.isoformat(),
+            "payload": {},
+        }
+        for c in contacts
+    )
+    out.extend(
+        {
+            "kind": "offer",
+            "name": o.status,
+            "deal_id": o.deal_id,
+            "at": o.created_at.isoformat(),
+            "payload": {"amount_cents": o.amount_cents},
+        }
+        for o in offers
+    )
+    out.sort(key=lambda r: r["at"], reverse=True)
+    return out[:80]
 
 
 @router.post("/mail/outbound")

@@ -11,6 +11,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [needTotp, setNeedTotp] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -18,10 +19,21 @@ export function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      const user = await auth.login(String(form.get("email")), String(form.get("password")));
+      const user = await auth.login(
+        String(form.get("email")),
+        String(form.get("password")),
+        needTotp ? String(form.get("totp") || "") : undefined,
+      );
       navigate(pathAfterLogin(user), { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? "Invalid email or password" : "Could not sign in");
+      if (err instanceof ApiError && err.code === "totp_required") {
+        setNeedTotp(true);
+        setError("Enter the code from your authenticator app.");
+      } else if (err instanceof ApiError && err.code === "totp_invalid") {
+        setError("Invalid authenticator or recovery code.");
+      } else {
+        setError(err instanceof ApiError ? "Invalid email or password" : "Could not sign in");
+      }
     } finally {
       setBusy(false);
     }
@@ -61,6 +73,19 @@ export function LoginPage() {
             className="mt-1 w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-gold"
           />
         </label>
+        {needTotp ? (
+          <label className="text-sm font-medium">
+            Authenticator code
+            <input
+              type="text"
+              name="totp"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              className="mt-1 w-full rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-gold"
+            />
+          </label>
+        ) : null}
         <button
           type="submit"
           disabled={busy}

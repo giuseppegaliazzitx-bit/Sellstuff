@@ -32,6 +32,8 @@ class User(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     approved_by_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    totp_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    totp_enrolled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     profile: Mapped[BuyerProfile | None] = relationship(back_populates="user", uselist=False)
     refresh_tokens: Mapped[list[RefreshToken]] = relationship(back_populates="user")

@@ -9,15 +9,24 @@ interface Note {
   created_at: string;
 }
 
+interface Activity {
+  kind: string;
+  name: string;
+  deal_id: string | null;
+  at: string;
+}
+
 export function BuyerDetailPage() {
   const { id } = useParams();
   const [buyer, setBuyer] = useState<BuyerRow | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [activity, setActivity] = useState<Activity[]>([]);
 
   async function load() {
     if (!id) return;
     setBuyer(await apiJson<BuyerRow>(`/api/v1/admin/buyers/${id}`));
     setNotes(await apiJson<Note[]>(`/api/v1/admin/users/${id}/notes`));
+    setActivity(await apiJson<Activity[]>(`/api/v1/admin/users/${id}/activity`));
   }
 
   useEffect(() => {
@@ -89,6 +98,16 @@ export function BuyerDetailPage() {
           Add
         </button>
       </form>
+      <h2 className="mt-8 font-medium">Activity</h2>
+      <ul className="mt-2 space-y-1 text-xs text-neutral-600">
+        {activity.map((a, i) => (
+          <li key={`${a.at}-${i}`}>
+            {new Date(a.at).toLocaleString()} · {a.kind} · {a.name}
+            {a.deal_id ? ` · deal ${a.deal_id.slice(0, 8)}` : ""}
+          </li>
+        ))}
+        {activity.length === 0 ? <li>No events yet.</li> : null}
+      </ul>
     </div>
   );
 }

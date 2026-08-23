@@ -81,11 +81,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.middleware("http")
     async def security_headers(request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
-        hosts = resolved.video_embed_hosts.replace(",", " ")
+        hosts = " ".join(
+            f"https://{h.strip()} https://www.{h.strip()}"
+            for h in resolved.video_embed_hosts.split(",")
+            if h.strip()
+        )
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com; "
-            f"frame-src {hosts}; "
+            f"frame-src 'self' {hosts} https://player.vimeo.com https://my.matterport.com; "
             "connect-src 'self' https://nominatim.openstreetmap.org; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "

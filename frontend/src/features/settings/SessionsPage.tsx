@@ -21,6 +21,16 @@ export function SessionsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="text-2xl font-semibold">Sessions</h1>
+      <button
+        type="button"
+        className="mt-2 text-sm text-gold"
+        onClick={async () => {
+          await apiJson("/api/v1/auth/sessions/revoke-all", { method: "POST", body: "{}" });
+          await load();
+        }}
+      >
+        Revoke other sessions
+      </button>
       <ul className="mt-6 space-y-3">
         {rows.map((row) => (
           <li key={row.id} className="flex items-center justify-between rounded border bg-white p-4 text-sm">

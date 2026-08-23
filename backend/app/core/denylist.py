@@ -17,6 +17,8 @@ DENYLIST = frozenset(
         "jv_partner_email",
         "jv_fee_split_pct",
         "hud_fmr_cents",
+        "early_access_until",
+        "lockbox",
     }
 )
 

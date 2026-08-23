@@ -14,3 +14,4 @@ Versioning: `v0.NN.0` per phase; Phase 12 is `v1.0.0`.
 - Buyer CSV import + claim-on-register, buy-box matching on publish, sandbox blasts with send cap estimate, Nominatim geocode (mockable), admin photo/status/geocode, offer pipeline, watchlist.
 - Settings (profile, buy box, sessions), watchlist + my offers + notifications, legal pages, deal lightbox/docs/RSVP/email, admin deal editor and buyer CRM notes.
 - Password reset (local sandbox link), map pin → deal, mini-map, showing windows, offer counter/backup, mailbox status, PDF watermark hook, IMAP matcher.
+- TOTP enrollment + login challenge + recovery codes; ADMIN_REQUIRE_2FA desk gate; IMAP ingest/unmatched queue; early-access filter + chip; landing page; video embed; mark-all notifications; buyer activity; change password.

@@ -67,6 +67,7 @@ async def admin_patch(
         payload,
         admin.id,
         ip=request.client.host if request.client else "",
+        settings=request.app.state.settings,
     )
     return to_admin(deal)
 

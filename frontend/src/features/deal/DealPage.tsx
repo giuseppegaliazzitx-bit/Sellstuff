@@ -134,12 +134,9 @@ export function DealPage() {
             {deal.beds} bd · {deal.baths} ba · {deal.sqft} sqft · {deal.year_built} · {deal.occupancy}
           </p>
           <p className="mt-4 whitespace-pre-wrap text-sm">{deal.description}</p>
-          {deal.video_url ? (
-            <p className="mt-4 text-sm">
-              <a href={deal.video_url} className="text-gold" target="_blank" rel="noreferrer">
-                Video walkthrough
-              </a>
-            </p>
+          {deal.video_url ? <VideoEmbed url={deal.video_url} /> : null}
+          {deal.early_access ? (
+            <p className="mt-3 text-xs uppercase tracking-wide text-gold">Early access</p>
           ) : null}
         </div>
         <div>
@@ -251,6 +248,41 @@ export function DealPage() {
         </p>
       ) : null}
     </div>
+  );
+}
+
+function VideoEmbed({ url }: { url: string }) {
+  let src = "";
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (host.includes("youtube")) {
+      const id = u.searchParams.get("v") || u.pathname.split("/").filter(Boolean).pop() || "";
+      src = `https://www.youtube-nocookie.com/embed/${id}`;
+    } else if (host.includes("vimeo")) {
+      src = `https://player.vimeo.com/video/${u.pathname.split("/").filter(Boolean).pop() || ""}`;
+    } else if (host.includes("matterport")) {
+      src = url;
+    }
+  } catch {
+    src = "";
+  }
+  if (!src) {
+    return (
+      <p className="mt-4 text-sm">
+        <a href={url} className="text-gold" target="_blank" rel="noreferrer">
+          Video walkthrough
+        </a>
+      </p>
+    );
+  }
+  return (
+    <iframe
+      title="Walkthrough"
+      src={src}
+      className="mt-4 aspect-video w-full rounded border"
+      allow="fullscreen; picture-in-picture"
+    />
   );
 }
 

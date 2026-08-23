@@ -86,10 +86,16 @@ async def require_active(
 
 
 async def require_admin(
+    request: Request,
     user: Annotated[User, Depends(require_active)],
 ) -> User:
     if user.role != "admin":
         raise AppError(403, "forbidden", "Admin only")
+    settings: Settings = request.app.state.settings
+    path = request.url.path
+    enroll_ok = path.startswith("/api/v1/auth/totp") or path in {"/api/v1/auth/me", "/api/v1/auth/logout"}
+    if settings.admin_require_2fa and not user.totp_secret and not enroll_ok:
+        raise AppError(403, "totp_enrollment_required", "Enroll two-factor authentication")
     return user
 
 

@@ -1,11 +1,13 @@
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
 import { GuestOnly, PendingOnly, RequireActive, RequireAdmin } from "./guards";
 import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
 import { ForgotPage } from "../features/auth/ForgotPage";
 import { ResetPage } from "../features/auth/ResetPage";
+import { VerifyPage } from "../features/auth/VerifyPage";
 import { WaitingRoom } from "../features/auth/WaitingRoom";
+import { HomePage } from "../features/legal/HomePage";
 import { BrowsePage } from "../features/browse/BrowsePage";
 import { DealPage } from "../features/deal/DealPage";
 import { BuyersPage } from "../features/admin/BuyersPage";
@@ -28,10 +30,11 @@ export const router = createBrowserRouter([
     path: "/",
     element: <AppShell />,
     children: [
-      { index: true, element: <Navigate to="/login" replace /> },
+      { index: true, element: <HomePage /> },
       { path: "privacy", element: <LegalPage kind="privacy" /> },
       { path: "terms", element: <LegalPage kind="terms" /> },
       { path: "disclosures", element: <LegalPage kind="disclosures" /> },
+      { path: "verify", element: <VerifyPage /> },
       {
         element: <GuestOnly />,
         children: [
