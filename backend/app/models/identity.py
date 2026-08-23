@@ -52,6 +52,12 @@ class BuyerProfile(Base):
     markets: Mapped[list[str]] = mapped_column(JSON, default=list)
     lead_source: Mapped[str] = mapped_column(String(40), default="website")
     email_alerts_enabled: Mapped[bool] = mapped_column(default=True)
+    tier: Mapped[str] = mapped_column(String(8), default="C")
+    tags: Mapped[list[str]] = mapped_column(JSON, default=list)
+    do_not_contact: Mapped[bool] = mapped_column(default=False)
+    closed_count: Mapped[int] = mapped_column(Integer, default=0)
+    flake_count: Mapped[int] = mapped_column(Integer, default=0)
+    funds_verified: Mapped[bool] = mapped_column(default=False)
 
     user: Mapped[User] = relationship(back_populates="profile")
 

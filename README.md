@@ -58,6 +58,8 @@ BOOTSTRAP_ADMIN_PASSWORD=correct-horse-admin1
 
 Restart the API. Log in as that admin. Register a buyer in another browser → waiting room → Approve on **Buyers**.
 
+On first API boot (not under pytest) the Dallas market and 8 sample houses are seeded. Browse the map as the approved buyer. Admin **Inventory** shows rehab and the contract clock; the buyer deal page shows list price + ARV only.
+
 ## Tests
 
 ```bash

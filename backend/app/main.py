@@ -79,6 +79,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     @app.middleware("http")
+    async def security_headers(request: Request, call_next: Callable) -> Response:
+        response = await call_next(request)
+        hosts = resolved.video_embed_hosts.replace(",", " ")
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://server.arcgisonline.com; "
+            f"frame-src {hosts}; "
+            "connect-src 'self' https://nominatim.openstreetmap.org; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "script-src 'self'"
+        )
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "same-origin"
+        return response
+
+    @app.middleware("http")
     async def csrf_middleware(request: Request, call_next: Callable) -> Response:
         try:
             enforce_csrf(request)
@@ -96,6 +113,44 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return response
 
     app.include_router(api_router)
+
+    @app.get("/api/v1/internal/media-auth", tags=["ops"])
+    async def media_auth(request: Request) -> JSONResponse:
+        from app.core.cookies import cookie_names as cnames
+        from app.services.auth import authenticate_access
+
+        settings = request.app.state.settings
+        names = cnames(settings)
+        token = request.cookies.get(names["access"])
+        auth = request.headers.get("authorization") or ""
+        if auth.lower().startswith("bearer "):
+            token = auth.split(" ", 1)[1]
+        if not token:
+            return JSONResponse(status_code=401, content={"code": "token_invalid"})
+        async with request.app.state.session_factory() as session:
+            try:
+                user, _claims = await authenticate_access(
+                    session, settings, request.app.state.kv, token
+                )
+            except AppError as exc:
+                return JSONResponse(status_code=exc.status_code, content={"code": exc.code})
+        if user.status != "active" and user.role != "admin":
+            return JSONResponse(status_code=401, content={"code": "token_invalid"})
+        return JSONResponse(status_code=200, content={"ok": True})
+
+    @app.get("/media/{key:path}", tags=["ops"])
+    async def media(key: str, request: Request):
+        from fastapi.responses import FileResponse
+
+        from app.integrations.storage import build_storage
+        from app.services.media import media_path
+
+        auth = await media_auth(request)
+        if auth.status_code != 200:
+            return auth
+        storage = build_storage(request.app.state.settings)
+        path = media_path(storage, key)
+        return FileResponse(path)
 
     @app.get("/healthz", response_model=HealthResponse, tags=["ops"])
     async def healthz(request: Request) -> JSONResponse:

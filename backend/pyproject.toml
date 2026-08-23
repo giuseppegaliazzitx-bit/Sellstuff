@@ -24,6 +24,7 @@ dependencies = [
   "uuid-utils>=0.10.0",
   "python-multipart>=0.0.18",
   "argon2-cffi>=23.1.0",
+  "pillow>=10.4.0",
 ]
 
 [project.optional-dependencies]
@@ -47,11 +48,12 @@ filterwarnings = [
 
 [tool.ruff]
 target-version = "py311"
-line-length = 100
+line-length = 120
 src = ["app", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["SIM103", "SIM108"]
 
 [tool.ruff.lint.per-file-ignores]
 "app/api/**/*.py" = ["B008"]

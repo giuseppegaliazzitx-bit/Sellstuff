@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 from app.core.config import get_settings  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import to_sync_url  # noqa: E402
-from app.models import BuyerProfile, RefreshToken, TermsAcceptance, User  # noqa: E402, F401
+from app import models as _models  # noqa: E402, F401
 
 config = context.config
 if config.config_file_name is not None:

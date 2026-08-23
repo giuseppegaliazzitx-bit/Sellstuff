@@ -25,8 +25,21 @@ export function Header() {
             <span className="hidden text-neutral-400 sm:inline">Browse</span>
           )}
           {user?.role === "admin" ? (
-            <Link to="/admin/buyers" className="text-neutral-200 hover:text-white">
-              Buyers
+            <>
+              <Link to="/admin/deals" className="text-neutral-200 hover:text-white">
+                Inventory
+              </Link>
+              <Link to="/admin/buyers" className="text-neutral-200 hover:text-white">
+                Buyers
+              </Link>
+              <Link to="/admin/metrics" className="hidden text-neutral-200 hover:text-white sm:inline">
+                Metrics
+              </Link>
+            </>
+          ) : null}
+          {user && user.status === "active" ? (
+            <Link to="/app/chat" className="text-neutral-200 hover:text-white">
+              Chat
             </Link>
           ) : null}
           {user ? (
