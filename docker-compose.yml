@@ -1,0 +1,104 @@
+# Local / staging Compose. Not required to develop on the laptop (see README).
+# When Docker Desktop is installed: `docker compose up --build`
+
+name: northstar
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: northstar
+      POSTGRES_PASSWORD: northstar
+      POSTGRES_DB: northstar
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U northstar"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [northstar]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [northstar]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    networks: [northstar]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      ENVIRONMENT: dev
+      DATABASE_URL: postgresql+psycopg://northstar:northstar@postgres:5432/northstar
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+      COOKIE_SECURE: "false"
+      COOKIE_NAME_PREFIX: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [northstar]
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["python", "-c", "from app.workers.settings import WorkerSettings; print('worker idle')"]
+    env_file: .env
+    environment:
+      ENVIRONMENT: dev
+      DATABASE_URL: postgresql+psycopg://northstar:northstar@postgres:5432/northstar
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [northstar]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    networks: [northstar]
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks: [northstar]
+
+networks:
+  northstar:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  minio-data:

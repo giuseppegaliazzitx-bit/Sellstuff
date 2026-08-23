@@ -1,0 +1,10 @@
+- [ ] Goal from DESIGN.md §16 restated in one sentence
+- [ ] Test matrix: every P<NN>-T* ID listed with the file that covers it
+- [ ] Tests green locally (pytest + `npm test` / `npm run build`); CI green on this PR
+- [ ] DealPublic denylist test present and green (Phase 2 onward)
+- [ ] Exactly one new Alembic revision; downgrade tested (or none, if no schema this phase)
+- [ ] `.env.example` updated for every new Settings field (CI checks, but say so)
+- [ ] docs/phases/NN-*.md has the demo script, and a human followed it once
+- [ ] No secrets, no `.env`, no `GOOGLE_MAPS` / `GMAIL_OAUTH` symbols
+- [ ] CHANGELOG.md entry under "Unreleased"
+- [ ] Rollback note: what to run if this phase must come out

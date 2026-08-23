@@ -1,0 +1,54 @@
+# Overlay for the brother's box. Images come from GHCR; the box never builds.
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml pull && up -d
+
+services:
+  postgres:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  redis:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+  minio:
+    restart: unless-stopped
+
+  backend:
+    image: ghcr.io/giuseppegaliazzitx-bit/sellstuff-backend:${IMAGE_TAG:-v0.0.0}
+    build: !reset
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: prod
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  worker:
+    image: ghcr.io/giuseppegaliazzitx-bit/sellstuff-backend:${IMAGE_TAG:-v0.0.0}
+    build: !reset
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: prod
+
+  frontend:
+    image: ghcr.io/giuseppegaliazzitx-bit/sellstuff-frontend:${IMAGE_TAG:-v0.0.0}
+    build: !reset
+    restart: unless-stopped
+
+  nginx:
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"

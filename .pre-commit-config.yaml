@@ -1,0 +1,36 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: denylist-secrets
+        name: no committed secrets / google symbols
+        entry: python
+        language: python
+        args:
+          - -c
+          - |
+            import sys
+            banned = ("GOOGLE_MAPS", "GMAIL_OAUTH")
+            failed = False
+            for path in sys.argv[1:]:
+                try:
+                    text = open(path, encoding="utf-8", errors="ignore").read()
+                except OSError:
+                    continue
+                for token in banned:
+                    if token in text:
+                        print(f"{path}: forbidden symbol {token}")
+                        failed = True
+            raise SystemExit(1 if failed else 0)
+        pass_filenames: true

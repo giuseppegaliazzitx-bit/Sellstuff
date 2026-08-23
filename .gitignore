@@ -1,0 +1,43 @@
+# secrets & local operator console
+.env
+.env.local
+.env.*.local
+*.eml
+
+# python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+backend/.coverage
+
+# node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+
+# data (local-first sqlite / media)
+data/
+pgdata/
+minio-data/
+
+# os / editors
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+*.log
+
+# generated
+*.tsbuildinfo
