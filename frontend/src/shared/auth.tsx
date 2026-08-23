@@ -90,6 +90,7 @@ export function useAuth(): AuthState {
 export function pathAfterLogin(user: AuthUser): string {
   if (user.status === "pending") return "/waiting";
   if (user.totp_required) return "/app/settings?tab=2fa";
+  if (user.preview_as_client) return "/app/browse";
   if (user.role === "admin") return "/admin/buyers";
   return "/app/browse";
 }

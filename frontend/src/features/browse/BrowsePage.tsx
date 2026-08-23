@@ -63,6 +63,7 @@ export function BrowsePage() {
           </label>
           <input
             type="number"
+            min={0}
             placeholder="Max $"
             defaultValue={priceMax ? Number(priceMax) / 100 : ""}
             className="w-24 rounded border px-2 py-1"
@@ -76,12 +77,14 @@ export function BrowsePage() {
           />
           <input
             type="number"
+            min={0}
             placeholder="Beds min"
             defaultValue={bedsMin}
             className="w-20 rounded border px-2 py-1"
             onBlur={(e) => {
               const next = new URLSearchParams(params);
-              if (e.target.value) next.set("beds_min", e.target.value);
+              const n = Number(e.target.value);
+              if (e.target.value && n >= 0) next.set("beds_min", String(Math.floor(n)));
               else next.delete("beds_min");
               setParams(next);
             }}

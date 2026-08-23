@@ -27,6 +27,7 @@ export interface AuthUser {
   terms_version: string | null;
   totp_enrolled?: boolean;
   totp_required?: boolean;
+  preview_as_client?: boolean;
 }
 
 export interface BuyerRow {

@@ -6,8 +6,10 @@ import { apiJson } from "../../shared/api/client";
 
 export function Header() {
   const cfg = useConfig();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [unread, setUnread] = useState(0);
+  const preview = Boolean(user?.preview_as_client);
+  const showAdmin = user?.role === "admin" && !preview;
   const home = !user ? "/" : user.status === "pending" ? "/waiting" : "/app/browse";
 
   useEffect(() => {
@@ -18,6 +20,24 @@ export function Header() {
   }, [user]);
   return (
     <header className="bg-header text-white">
+      {preview ? (
+        <div className="bg-gold px-4 py-1 text-center text-xs text-white">
+          Viewing as a buyer — rehab, lockbox, and the desk are hidden.{" "}
+          <button
+            type="button"
+            className="underline"
+            onClick={async () => {
+              await apiJson("/api/v1/auth/preview-as-client", {
+                method: "POST",
+                body: JSON.stringify({ enabled: false }),
+              });
+              await refreshUser();
+            }}
+          >
+            Exit client view
+          </button>
+        </div>
+      ) : null}
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link to={home} className="flex items-center gap-2" aria-label={cfg.brand_name}>
           {cfg.logo_url ? (
@@ -31,7 +51,7 @@ export function Header() {
             <summary className="cursor-pointer list-none text-sm text-neutral-200">Menu</summary>
             <div className="absolute right-0 z-20 mt-2 flex w-44 flex-col gap-2 rounded border border-neutral-700 bg-header p-3 text-sm shadow">
               {user.status === "active" ? <Link to="/app/browse">Browse</Link> : null}
-              {user.role === "admin" ? (
+              {showAdmin ? (
                 <>
                   <Link to="/admin/deals">Inventory</Link>
                   <Link to="/admin/buyers">Buyers</Link>
@@ -61,7 +81,7 @@ export function Header() {
           ) : (
             <span className="hidden text-neutral-400 sm:inline">Browse</span>
           )}
-          {user?.role === "admin" ? (
+          {showAdmin ? (
             <>
               <Link to="/admin/deals" className="text-neutral-200 hover:text-white">
                 Inventory

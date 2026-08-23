@@ -9,7 +9,7 @@ export function GuestOnly() {
     if (user.status === "pending") return <Navigate to="/waiting" replace />;
     const next = new URLSearchParams(location.search).get("next");
     if (next) return <Navigate to={next} replace />;
-    if (user.role === "admin") return <Navigate to="/admin/buyers" replace />;
+    if (user.role === "admin" && !user.preview_as_client) return <Navigate to="/admin/buyers" replace />;
     return <Navigate to="/app/browse" replace />;
   }
   return <Outlet />;
@@ -20,7 +20,9 @@ export function PendingOnly() {
   if (!ready) return <p className="p-8 text-center text-sm text-neutral-500">Loading…</p>;
   if (!user) return <Navigate to="/login" replace />;
   if (user.status !== "pending") {
-    return <Navigate to={user.role === "admin" ? "/admin/buyers" : "/app/browse"} replace />;
+    return (
+      <Navigate to={user.role === "admin" && !user.preview_as_client ? "/admin/buyers" : "/app/browse"} replace />
+    );
   }
   return <Outlet />;
 }
@@ -55,6 +57,9 @@ export function RequireAdmin() {
   }
   if (user.totp_required) {
     return <Navigate to="/app/settings?tab=2fa" replace />;
+  }
+  if (user.preview_as_client) {
+    return <Navigate to="/app/browse" replace />;
   }
   return <Outlet />;
 }

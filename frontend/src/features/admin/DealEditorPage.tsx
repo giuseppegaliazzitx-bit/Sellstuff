@@ -45,6 +45,8 @@ export function DealEditorPage() {
               description: String(fd.get("description")),
               lockbox_code: String(fd.get("lockbox")),
               occupancy: String(fd.get("occupancy")),
+              beds: Math.max(0, Number(fd.get("beds") || 0)),
+              baths: Math.max(0, Number(fd.get("baths") || 0)),
               video_url: String(fd.get("video") || "") || null,
               ...(due ? { offers_due_at: new Date(due).toISOString() } : {}),
               ...(early ? { early_access_until: new Date(early).toISOString() } : {}),
@@ -54,7 +56,31 @@ export function DealEditorPage() {
           setMsg("Saved");
         }}
       >
-        <input name="price" type="number" defaultValue={deal.list_price_cents / 100} className="rounded border px-2 py-1" />
+        <input
+          name="price"
+          type="number"
+          min={0}
+          defaultValue={deal.list_price_cents / 100}
+          className="rounded border px-2 py-1"
+        />
+        <input
+          name="beds"
+          type="number"
+          min={0}
+          step={1}
+          defaultValue={deal.beds}
+          placeholder="Beds"
+          className="rounded border px-2 py-1"
+        />
+        <input
+          name="baths"
+          type="number"
+          min={0}
+          step={0.5}
+          defaultValue={deal.baths}
+          placeholder="Baths"
+          className="rounded border px-2 py-1"
+        />
         <input name="lockbox" defaultValue={deal.lockbox_code} placeholder="Lockbox" className="rounded border px-2 py-1" />
         <input name="occupancy" defaultValue={deal.occupancy} className="rounded border px-2 py-1" />
         <input name="video" defaultValue={deal.video_url || ""} placeholder="YouTube / Vimeo / Matterport URL" className="rounded border px-2 py-1" />

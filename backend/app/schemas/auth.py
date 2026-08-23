@@ -74,6 +74,7 @@ class UserOut(BaseModel):
     terms_version: str | None = None
     totp_enrolled: bool = False
     totp_required: bool = False
+    preview_as_client: bool = False
 
 
 class SessionOut(BaseModel):

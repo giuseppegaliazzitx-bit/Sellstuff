@@ -6,7 +6,13 @@ from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.core.cookies import clear_auth_cookies, set_auth_cookies, set_csrf_cookie
+from app.core.cookies import (
+    clear_auth_cookies,
+    preview_enabled,
+    set_auth_cookies,
+    set_csrf_cookie,
+    set_preview_cookie,
+)
 from app.core.deps import (
     client_ip,
     enforce_csrf,
@@ -15,6 +21,7 @@ from app.core.deps import (
     get_kv,
     get_limiter,
     get_settings_dep,
+    require_active,
     require_user,
 )
 from app.core.errors import AppError
@@ -93,6 +100,7 @@ async def login(
         totp_code=payload.totp_code,
     )
     set_auth_cookies(response, settings, access=access, refresh=refresh, csrf=csrf)
+    set_preview_cookie(response, settings, False)
     return auth_service.user_out(user, settings)
 
 
@@ -146,10 +154,27 @@ async def logout(
 
 @router.get("/me", response_model=UserOut)
 async def me(
+    request: Request,
     user: User = Depends(require_user),
     settings: Settings = Depends(get_settings_dep),
 ) -> UserOut:
-    return auth_service.user_out(user, settings)
+    return auth_service.user_out(user, settings, preview_as_client=preview_enabled(request.cookies, settings))
+
+
+@router.post("/preview-as-client", response_model=UserOut)
+async def preview_as_client(
+    payload: dict,
+    request: Request,
+    response: Response,
+    user: User = Depends(require_active),
+    settings: Settings = Depends(get_settings_dep),
+) -> UserOut:
+    enforce_csrf(request)
+    if user.role != "admin":
+        raise AppError(403, "forbidden", "Admin only")
+    enabled = bool(payload.get("enabled"))
+    set_preview_cookie(response, settings, enabled)
+    return auth_service.user_out(user, settings, preview_as_client=enabled)
 
 
 @router.post("/forgot")

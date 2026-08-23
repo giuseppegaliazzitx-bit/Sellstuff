@@ -106,6 +106,20 @@ class DealCreate(BaseModel):
             raise ValueError("money must be integer cents")
         return v
 
+    @field_validator("beds", "sqft")
+    @classmethod
+    def non_negative_int(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("beds and sqft cannot be negative")
+        return v
+
+    @field_validator("baths")
+    @classmethod
+    def non_negative_baths(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError("baths cannot be negative")
+        return v
+
 
 class DealPatch(BaseModel):
     list_price_cents: int | None = None
@@ -132,6 +146,20 @@ class DealPatch(BaseModel):
     deal_structure: str | None = None
     contract_executed_at: datetime | None = None
     option_period_ends_at: datetime | None = None
+
+    @field_validator("beds", "sqft")
+    @classmethod
+    def non_negative_int_patch(cls, v: int | None) -> int | None:
+        if v is not None and v < 0:
+            raise ValueError("beds and sqft cannot be negative")
+        return v
+
+    @field_validator("baths")
+    @classmethod
+    def non_negative_baths_patch(cls, v: float | None) -> float | None:
+        if v is not None and v < 0:
+            raise ValueError("baths cannot be negative")
+        return v
 
 
 class MapPin(BaseModel):

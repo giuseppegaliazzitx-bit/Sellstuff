@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.core.cookies import cookie_names
+from app.core.cookies import cookie_names, preview_enabled
 from app.core.errors import AppError
 from app.core.kv import KV, MemoryLimiter
 from app.models import User
@@ -85,6 +85,11 @@ async def require_active(
     return user
 
 
+def viewing_as_client(request: Request, user: User) -> bool:
+    settings: Settings = request.app.state.settings
+    return user.role != "admin" or preview_enabled(request.cookies, settings)
+
+
 async def require_admin(
     request: Request,
     user: Annotated[User, Depends(require_active)],
@@ -93,7 +98,13 @@ async def require_admin(
         raise AppError(403, "forbidden", "Admin only")
     settings: Settings = request.app.state.settings
     path = request.url.path
-    enroll_ok = path.startswith("/api/v1/auth/totp") or path in {"/api/v1/auth/me", "/api/v1/auth/logout"}
+    enroll_ok = path.startswith("/api/v1/auth/totp") or path in {
+        "/api/v1/auth/me",
+        "/api/v1/auth/logout",
+        "/api/v1/auth/preview-as-client",
+    }
+    if preview_enabled(request.cookies, settings) and path != "/api/v1/auth/preview-as-client":
+        raise AppError(403, "preview_as_client", "Exit client view to use the desk")
     if settings.admin_require_2fa and not user.totp_secret and not enroll_ok:
         raise AppError(403, "totp_enrollment_required", "Enroll two-factor authentication")
     return user

@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.denylist import assert_public_clean
-from app.core.deps import get_db, require_active, require_user
+from app.core.deps import get_db, require_active, require_user, viewing_as_client
 from app.core.errors import AppError
 from app.integrations.storage import build_storage
 from app.models import (
@@ -73,6 +73,8 @@ async def list_deals(
     property_type: str | None = None,
     occupancy: str | None = None,
 ) -> list[DealPublic]:
+    if beds_min is not None and beds_min < 0:
+        raise AppError(422, "invalid_beds", "Beds cannot be negative")
     deals = await list_public_deals(
         session,
         market_id=market_id,
@@ -94,11 +96,12 @@ async def list_deals(
 @router.get("/deals/{deal_id}", response_model=DealPublic)
 async def deal_detail(
     deal_id: str,
+    request: Request,
     user: User = Depends(require_active),
     session: AsyncSession = Depends(get_db),
 ) -> DealPublic:
     deal = await get_deal(session, deal_id)
-    if not client_can_see(deal, tier=_tier(user)) and user.role != "admin":
+    if not client_can_see(deal, tier=_tier(user)) and viewing_as_client(request, user):
         raise AppError(404, "not_found", "Deal not found")
     saved = deal.id in await saved_ids(session, user.id)
     payload = to_public(deal, saved=saved)
@@ -139,11 +142,12 @@ async def map_pins(
 @router.get("/deals/{deal_id}/documents")
 async def deal_docs(
     deal_id: str,
+    request: Request,
     user: User = Depends(require_active),
     session: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     deal = await get_deal(session, deal_id)
-    if not client_can_see(deal, tier=_tier(user)) and user.role != "admin":
+    if not client_can_see(deal, tier=_tier(user)) and viewing_as_client(request, user):
         raise AppError(404, "not_found", "Deal not found")
     return [{"id": d.id, "kind": d.kind, "filename": d.filename} for d in deal.documents]
 

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiJson } from "../../shared/api/client";
+import { useAuth } from "../../shared/auth";
 import { SessionsPage } from "./SessionsPage";
 
 interface Profile {
@@ -15,6 +17,8 @@ interface Profile {
 }
 
 export function SettingsPage() {
+  const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
   const initial = new URLSearchParams(window.location.search).get("tab");
   const [tab, setTab] = useState<"profile" | "box" | "sessions" | "security">(
     initial === "2fa" || initial === "security" ? "security" : "profile",
@@ -31,6 +35,31 @@ export function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="text-2xl font-semibold">Settings</h1>
+      {user?.role === "admin" ? (
+        <div className="mt-4 rounded border bg-white p-4 text-sm">
+          <p className="font-medium">Client view</p>
+          <p className="mt-1 text-neutral-600">
+            Hide the desk chrome and browse inventory the way a buyer does. Desk routes stay blocked
+            until you exit. Demo buyer login: buyer@localhost / correct-horse-buyer1
+          </p>
+          <button
+            type="button"
+            className="mt-3 rounded bg-header px-3 py-1 font-semibold text-white"
+            onClick={async () => {
+              const next = !user.preview_as_client;
+              const me = await apiJson<typeof user>("/api/v1/auth/preview-as-client", {
+                method: "POST",
+                body: JSON.stringify({ enabled: next }),
+              });
+              await refreshUser();
+              navigate(next ? "/app/browse" : "/admin/buyers", { replace: true });
+              return me;
+            }}
+          >
+            {user.preview_as_client ? "Exit client view" : "View site as a buyer"}
+          </button>
+        </div>
+      ) : null}
       <div className="mt-4 flex gap-2 text-sm">
         {(["profile", "box", "sessions", "security"] as const).map((t) => (
           <button

@@ -312,9 +312,9 @@ function OfferBox({ dealId }: { dealId: string }) {
     >
       <p className="font-medium">Offer</p>
       {msg ? <p className="text-xs">{msg}</p> : null}
-      <input name="amount" type="number" required placeholder="Amount USD" className="rounded border px-2 py-1" />
-      <input name="emd" type="number" placeholder="EMD USD" className="rounded border px-2 py-1" />
-      <input name="close_days" type="number" defaultValue={14} className="rounded border px-2 py-1" />
+      <input name="amount" type="number" min={0} required placeholder="Amount USD" className="rounded border px-2 py-1" />
+      <input name="emd" type="number" min={0} placeholder="EMD USD" className="rounded border px-2 py-1" />
+      <input name="close_days" type="number" min={0} defaultValue={14} className="rounded border px-2 py-1" />
       <button type="submit" className="rounded bg-header px-3 py-1 text-white">
         Submit offer
       </button>

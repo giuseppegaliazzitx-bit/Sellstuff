@@ -54,7 +54,7 @@ def email_verification_required(settings: Settings) -> bool:
     return settings.mail_configured
 
 
-def user_out(user: User, settings: Settings) -> UserOut:
+def user_out(user: User, settings: Settings, *, preview_as_client: bool = False) -> UserOut:
     latest = None
     if user.terms:
         latest = max(user.terms, key=lambda row: row.accepted_at)
@@ -72,6 +72,7 @@ def user_out(user: User, settings: Settings) -> UserOut:
         terms_version=latest.terms_version if latest else None,
         totp_enrolled=enrolled,
         totp_required=needs,
+        preview_as_client=bool(preview_as_client and user.role == "admin"),
     )
 
 

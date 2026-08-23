@@ -12,11 +12,17 @@ REFRESH_COOKIE_PATH = "/api/v1/auth"
 def cookie_names(settings: Settings) -> dict[str, str]:
     prefix = settings.cookie_name_prefix
     if prefix == "__Host-":
-        return {"access": "__Host-access", "refresh": "__Secure-refresh", "csrf": "csrf"}
+        return {
+            "access": "__Host-access",
+            "refresh": "__Secure-refresh",
+            "csrf": "csrf",
+            "preview": "preview_client",
+        }
     return {
         "access": f"{prefix}access" if prefix else "access",
         "refresh": f"{prefix}refresh" if prefix else "refresh",
         "csrf": "csrf",
+        "preview": f"{prefix}preview" if prefix else "preview_client",
     }
 
 
@@ -73,6 +79,27 @@ def clear_auth_cookies(response: Response, settings: Settings) -> None:
     names = cookie_names(settings)
     response.delete_cookie(names["access"], path="/")
     response.delete_cookie(names["refresh"], path=REFRESH_COOKIE_PATH)
+    response.delete_cookie(names["preview"], path="/")
+
+
+def preview_enabled(request_cookies: dict[str, str], settings: Settings) -> bool:
+    return request_cookies.get(cookie_names(settings)["preview"]) == "1"
+
+
+def set_preview_cookie(response: Response, settings: Settings, enabled: bool) -> None:
+    names = cookie_names(settings)
+    if enabled:
+        response.set_cookie(
+            names["preview"],
+            "1",
+            max_age=settings.refresh_token_ttl_days * 24 * 3600,
+            httponly=False,
+            secure=settings.cookie_secure,
+            samesite="lax",
+            path="/",
+        )
+    else:
+        response.delete_cookie(names["preview"], path="/")
 
 
 def set_csrf_cookie(response: Response, settings: Settings, csrf: str) -> None:

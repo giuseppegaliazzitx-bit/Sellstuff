@@ -39,8 +39,8 @@ export function AdminDealsPage() {
               arv_cents: Math.round(Number(fd.get("arv")) * 100),
               rehab_high_cents: Math.round(Number(fd.get("rehab") || 0) * 100),
               assignment_fee_cents: Math.round(Number(fd.get("fee") || 0) * 100),
-              beds: Number(fd.get("beds") || 3),
-              baths: 2,
+              beds: Math.max(0, Number(fd.get("beds") || 3)),
+              baths: Math.max(0, Number(fd.get("baths") || 2)),
               sqft: Number(fd.get("sqft") || 1200),
               lat: 32.7767,
               lng: -96.797,
@@ -58,10 +58,12 @@ export function AdminDealsPage() {
         </select>
         <input name="address1" required placeholder="Address" className="rounded border px-2 py-1" />
         <input name="city" placeholder="City" className="rounded border px-2 py-1" />
-        <input name="price" type="number" required placeholder="List price USD" className="rounded border px-2 py-1" />
-        <input name="arv" type="number" required placeholder="ARV USD" className="rounded border px-2 py-1" />
-        <input name="rehab" type="number" placeholder="Rehab USD (desk)" className="rounded border px-2 py-1" />
-        <input name="fee" type="number" placeholder="Fee USD (desk)" className="rounded border px-2 py-1" />
+        <input name="price" type="number" min={0} required placeholder="List price USD" className="rounded border px-2 py-1" />
+        <input name="arv" type="number" min={0} required placeholder="ARV USD" className="rounded border px-2 py-1" />
+        <input name="rehab" type="number" min={0} placeholder="Rehab USD (desk)" className="rounded border px-2 py-1" />
+        <input name="fee" type="number" min={0} placeholder="Fee USD (desk)" className="rounded border px-2 py-1" />
+        <input name="beds" type="number" min={0} step={1} defaultValue={3} placeholder="Beds" className="rounded border px-2 py-1" />
+        <input name="baths" type="number" min={0} step={0.5} defaultValue={2} placeholder="Baths" className="rounded border px-2 py-1" />
         <button type="submit" className="rounded bg-gold px-3 py-1 font-semibold text-white">
           Add deal
         </button>
