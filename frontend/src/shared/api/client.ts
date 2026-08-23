@@ -75,7 +75,18 @@ export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<
   const res = await apiFetch(path, init);
   const body = await defParse(res);
   if (!res.ok) {
-    throw new ApiError((body.message as string) || `${path} failed`, res.status, (body.code as string) || "");
+    const detail = body.detail;
+    let fromDetail = "";
+    if (typeof detail === "string") fromDetail = detail;
+    else if (Array.isArray(detail) && detail[0] && typeof detail[0] === "object") {
+      const first = detail[0] as { msg?: string };
+      fromDetail = first.msg || "";
+    }
+    throw new ApiError(
+      (body.message as string) || fromDetail || `${path} failed`,
+      res.status,
+      (body.code as string) || "",
+    );
   }
   return body as T;
 }

@@ -1,12 +1,33 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import AfterValidator, BaseModel, Field
+
+
+def _normalize_email(value: str) -> str:
+    email = value.strip().lower()
+    if "@" not in email:
+        raise ValueError("invalid email")
+    local, _, domain = email.partition("@")
+    if not local or not domain:
+        raise ValueError("invalid email")
+    if domain == "localhost" or domain.endswith(".localhost") or domain.endswith(".local"):
+        return email
+    from email_validator import EmailNotValidError, validate_email
+
+    try:
+        return str(validate_email(email, check_deliverability=False).normalized)
+    except EmailNotValidError as exc:
+        raise ValueError("invalid email") from exc
+
+
+EmailAddr = Annotated[str, AfterValidator(_normalize_email)]
 
 
 class RegisterIn(BaseModel):
-    email: EmailStr
+    email: EmailAddr
     password: str
     full_name: str = Field(min_length=1, max_length=200)
     phone: str = Field(default="", max_length=40)
@@ -20,13 +41,13 @@ class RegisterIn(BaseModel):
 
 
 class LoginIn(BaseModel):
-    email: EmailStr
+    email: EmailAddr
     password: str
     totp_code: str | None = None
 
 
 class ForgotIn(BaseModel):
-    email: EmailStr
+    email: EmailAddr
 
 
 class ResetIn(BaseModel):

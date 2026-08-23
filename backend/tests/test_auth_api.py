@@ -76,6 +76,21 @@ async def test_pending_cannot_list_deals(app_client) -> None:
     assert res.status_code == 403
 
 
+async def test_login_accepts_localhost_email(settings) -> None:
+    s = settings.model_copy(
+        update={"bootstrap_admin_email": "admin@localhost", "bootstrap_admin_password": ADMIN_PASSWORD}
+    )
+    app = create_app(s)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.post(
+            "/api/v1/auth/login",
+            json={"email": "admin@localhost", "password": ADMIN_PASSWORD},
+        )
+    assert res.status_code == 200, res.text
+    assert res.json()["email"] == "admin@localhost"
+
+
 async def test_login_bad_password_same_as_unknown(app_client) -> None:
     """P1-T5."""
     _app, client = app_client

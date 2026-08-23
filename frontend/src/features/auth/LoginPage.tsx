@@ -31,8 +31,10 @@ export function LoginPage() {
         setError("Enter the code from your authenticator app.");
       } else if (err instanceof ApiError && err.code === "totp_invalid") {
         setError("Invalid authenticator or recovery code.");
+      } else if (err instanceof ApiError && (err.status === 401 || err.code === "invalid_credentials")) {
+        setError("Invalid email or password");
       } else {
-        setError(err instanceof ApiError ? "Invalid email or password" : "Could not sign in");
+        setError(err instanceof ApiError ? err.message || "Could not sign in" : "Could not sign in");
       }
     } finally {
       setBusy(false);
