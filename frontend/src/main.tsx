@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fetchPublicConfig } from "./shared/api/client";
 import type { PublicConfig } from "./shared/api/types";
 import { ConfigProvider } from "./shared/config";
+import { AuthProvider } from "./shared/auth";
 import { router } from "./app/router";
 import "./styles/index.css";
 
@@ -41,7 +42,9 @@ function Boot() {
   }
   return (
     <ConfigProvider value={config}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </ConfigProvider>
   );
 }

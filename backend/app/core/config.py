@@ -132,6 +132,7 @@ class Settings(BaseSettings):
             "footer_legal_name": self.public_footer_legal_name or None,
             "primary_state": self.public_primary_state,
             "mailing_address": self.public_mailing_address or None,
+            "terms_version": self.terms_version,
         }
 
 

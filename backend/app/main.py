@@ -1,20 +1,27 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
+from app.core.cookies import cookie_names, set_csrf_cookie
+from app.core.deps import enforce_csrf
+from app.core.errors import AppError, app_error_handler
+from app.core.kv import MemoryKV, MemoryLimiter, RedisKV
 from app.core.logging import configure_logging
+from app.core.migrate import upgrade_head
 from app.core.redis_client import make_redis, ping_redis
+from app.core.security import TokenError
 from app.db.session import create_engine, create_session_factory, ping_database
 from app.schemas.public import HealthResponse, VersionResponse
+from app.services.bootstrap import seed_admin
 
 
 def _ensure_local_dirs(settings: Settings) -> None:
@@ -47,12 +54,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/openapi.json",
     )
     app.state.settings = resolved
-    # Engine is created here so /healthz works even if the ASGI server
-    # has not entered lifespan yet (httpx ASGITransport in tests).
     _ensure_local_dirs(resolved)
+    if resolved.database_url.startswith("sqlite"):
+        upgrade_head(resolved)
+        seed_admin(resolved)
     app.state.engine = create_engine(resolved)
     app.state.session_factory = create_session_factory(app.state.engine)
     app.state.redis = make_redis(resolved)
+    app.state.kv = RedisKV(app.state.redis) if app.state.redis is not None else MemoryKV()
+    app.state.limiter = MemoryLimiter()
+    app.state.mail_outbox: list[dict[str, str]] = []
+    app.add_exception_handler(AppError, app_error_handler)
+
+    @app.exception_handler(TokenError)
+    async def token_error_handler(_request: Request, exc: TokenError) -> JSONResponse:
+        return JSONResponse(status_code=401, content={"code": exc.code, "message": str(exc)})
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=resolved.cors_origin_list,
@@ -60,6 +77,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.middleware("http")
+    async def csrf_middleware(request: Request, call_next: Callable) -> Response:
+        try:
+            enforce_csrf(request)
+        except AppError as exc:
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"code": exc.code, "message": exc.message},
+            )
+        response = await call_next(request)
+        names = cookie_names(request.app.state.settings)
+        if names["csrf"] not in request.cookies and request.url.path.startswith("/api/"):
+            from secrets import token_urlsafe
+
+            set_csrf_cookie(response, request.app.state.settings, token_urlsafe(32))
+        return response
+
     app.include_router(api_router)
 
     @app.get("/healthz", response_model=HealthResponse, tags=["ops"])

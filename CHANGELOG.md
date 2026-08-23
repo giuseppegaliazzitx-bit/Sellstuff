@@ -9,3 +9,4 @@ Versioning: `v0.NN.0` per phase; Phase 12 is `v1.0.0`.
 ### Added
 
 - Phase 0 platform skeleton: FastAPI health/version/public-config, Vite SPA shell with runtime brand, Alembic baseline, local-first SQLite, Docker files for later.
+- Phase 1 auth: open register, JWT cookies, rotating refresh, CSRF, pending approval, waiting room, admin buyers, sessions.

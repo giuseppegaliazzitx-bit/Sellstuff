@@ -1,0 +1,91 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import Settings
+from app.core.deps import enforce_csrf, get_db, get_kv, get_settings_dep, require_admin
+from app.core.kv import KV
+from app.models import User
+from app.schemas.auth import ApproveIn, BuyerOut, RejectIn
+from app.services.auth import email_verification_required
+from app.services.users import approve_user, get_client, list_buyers, reject_user, suspend_user
+
+router = APIRouter(prefix="/admin/buyers", tags=["admin"])
+
+
+def _to_out(user: User) -> BuyerOut:
+    profile = user.profile
+    return BuyerOut(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        status=user.status,
+        role=user.role,
+        email_verified=user.email_verified_at is not None,
+        company=profile.company if profile else None,
+        lead_source=profile.lead_source if profile else None,
+        created_at=user.created_at,
+        phone=user.phone_raw,
+    )
+
+
+@router.get("", response_model=list[BuyerOut])
+async def buyers(
+    status: str | None = Query(default=None),
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> list[BuyerOut]:
+    rows = await list_buyers(session, status)
+    return [_to_out(u) for u in rows]
+
+
+@router.post("/{user_id}/approve", response_model=BuyerOut)
+async def approve(
+    user_id: str,
+    request: Request,
+    payload: ApproveIn | None = None,
+    admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+    kv: KV = Depends(get_kv),
+    settings: Settings = Depends(get_settings_dep),
+) -> BuyerOut:
+    enforce_csrf(request)
+    target = await get_client(session, user_id)
+    updated = await approve_user(
+        session,
+        kv,
+        admin=admin,
+        user=target,
+        require_verified=email_verification_required(settings),
+    )
+    return _to_out(updated)
+
+
+@router.post("/{user_id}/reject", response_model=BuyerOut)
+async def reject(
+    user_id: str,
+    request: Request,
+    payload: RejectIn | None = None,
+    admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+    kv: KV = Depends(get_kv),
+) -> BuyerOut:
+    enforce_csrf(request)
+    target = await get_client(session, user_id)
+    updated = await reject_user(session, kv, user=target)
+    return _to_out(updated)
+
+
+@router.post("/{user_id}/suspend", response_model=BuyerOut)
+async def suspend(
+    user_id: str,
+    request: Request,
+    admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+    kv: KV = Depends(get_kv),
+) -> BuyerOut:
+    enforce_csrf(request)
+    target = await get_client(session, user_id)
+    updated = await suspend_user(session, kv, user=target)
+    return _to_out(updated)

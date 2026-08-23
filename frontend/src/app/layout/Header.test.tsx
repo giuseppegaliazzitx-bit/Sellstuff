@@ -14,6 +14,7 @@ const cfg: PublicConfig = {
   footer_legal_name: null,
   primary_state: "TX",
   mailing_address: null,
+  terms_version: "2026-08-22",
 };
 
 test("header wordmark is the runtime brand", () => {

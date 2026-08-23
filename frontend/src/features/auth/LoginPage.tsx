@@ -1,12 +1,30 @@
 import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useConfig } from "../../shared/config";
+import { useAuth, pathAfterLogin } from "../../shared/auth";
+import { ApiError } from "../../shared/api/client";
 
 export function LoginPage() {
   const cfg = useConfig();
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    setError(null);
+    try {
+      const user = await auth.login(String(form.get("email")), String(form.get("password")));
+      navigate(pathAfterLogin(user), { replace: true });
+    } catch (err) {
+      setError(err instanceof ApiError ? "Invalid email or password" : "Could not sign in");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -22,6 +40,7 @@ export function LoginPage() {
         onSubmit={onSubmit}
         className="flex flex-col gap-4 rounded-lg border border-neutral-200 bg-white p-6 shadow-sm"
       >
+        {error ? <p className="text-sm text-red-700">{error}</p> : null}
         <label className="text-sm font-medium">
           Email
           <input
@@ -44,12 +63,15 @@ export function LoginPage() {
         </label>
         <button
           type="submit"
-          className="rounded bg-gold px-4 py-2 text-sm font-semibold text-white hover:bg-gold-hover"
+          disabled={busy}
+          className="rounded bg-gold px-4 py-2 text-sm font-semibold text-white hover:bg-gold-hover disabled:opacity-60"
         >
-          Log in
+          {busy ? "Signing in…" : "Log in"}
         </button>
         <p className="text-center text-xs text-neutral-500">
-          Sign-in wires up in Phase 1. Registration will be open — no invite code.
+          <Link to="/forgot" className="text-gold hover:text-gold-hover">
+            Forgot password
+          </Link>
         </p>
       </form>
       <p className="text-center text-sm text-neutral-600">

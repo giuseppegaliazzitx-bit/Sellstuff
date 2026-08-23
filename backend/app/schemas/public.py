@@ -13,6 +13,7 @@ class PublicConfig(BaseModel):
     footer_legal_name: str | None
     primary_state: str
     mailing_address: str | None
+    terms_version: str
 
 
 class HealthResponse(BaseModel):

@@ -47,6 +47,17 @@ python scripts/run_dev.py
 
 Change `PUBLIC_BRAND_NAME` in `.env`, restart the API, refresh the browser. No frontend rebuild.
 
+### Demo accounts (Phase 1)
+
+Set in `.env` (12+ character password, not a common word):
+
+```
+BOOTSTRAP_ADMIN_EMAIL=admin@localhost
+BOOTSTRAP_ADMIN_PASSWORD=correct-horse-admin1
+```
+
+Restart the API. Log in as that admin. Register a buyer in another browser → waiting room → Approve on **Buyers**.
+
 ## Tests
 
 ```bash
