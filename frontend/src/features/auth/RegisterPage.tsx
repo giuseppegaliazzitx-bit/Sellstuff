@@ -53,7 +53,7 @@ export function RegisterPage() {
     <div className="mx-auto max-w-md px-4 py-12">
       <h1 className="text-2xl font-semibold">Register</h1>
       <p className="mt-2 text-sm text-neutral-600">
-        Open registration for {cfg.brand_name}. New accounts wait for admin approval.
+        Create an account for {cfg.brand_name}. You can browse as soon as you sign up.
       </p>
       <form
         onSubmit={onSubmit}

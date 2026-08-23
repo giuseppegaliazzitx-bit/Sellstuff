@@ -63,7 +63,7 @@ These are safe to expose. The SPA header, footer, login copy, and `/api/v1/publi
 
 | Variable | Default | What it is for |
 |---|---|---|
-| `REQUIRE_ADMIN_APPROVAL` | `true` | New buyers land in the waiting room until an admin Approves. Imported-list emails skip this and go `active`. |
+| `REQUIRE_ADMIN_APPROVAL` | `false` | When `true`, new buyers wait in the waiting room until an admin Approves. When `false` (local default now), anyone who registers is `active` immediately. Imported-list emails are always `active`. |
 | `REQUIRE_EMAIL_VERIFICATION` | `auto` | `true` = always require verify-email. `false` = never. `auto` = require it only when mail is configured. |
 | `ADMIN_REQUIRE_2FA` | `false` | When `true`, an admin without TOTP enrolled cannot use `/admin/*` — only Settings → security. Leave false until every admin has enrolled. |
 | `SECRET_KEY` | *(required)* | Current signing key. See [rotation](#rotate-secret_key). |

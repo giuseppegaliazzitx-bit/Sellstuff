@@ -17,3 +17,4 @@ Versioning: `v0.NN.0` per phase; Phase 12 is `v1.0.0`.
 - TOTP enrollment + login challenge + recovery codes; ADMIN_REQUIRE_2FA desk gate; IMAP ingest/unmatched queue; early-access filter + chip; landing page; video embed; mark-all notifications; buyer activity; change password.
 - Phase 9–12 leftovers: price-drop + gone/similar alerts, blast segments/resume/track clicks, richer metrics, buyer CSV export + duplicate-phone hint + POF, create-admin CLI, Sentry hook, denylist-grep, deploy runbooks.
 - Operator catalog of every `.env` knob: `docs/runbooks/env-variables.md`.
+- Open signup: `REQUIRE_ADMIN_APPROVAL=false`; landing CTA is Sign up, not Request access.
