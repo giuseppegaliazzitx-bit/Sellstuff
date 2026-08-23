@@ -74,6 +74,9 @@ class BuyerOut(BaseModel):
     lead_source: str | None = None
     created_at: datetime
     phone: str = ""
+    tier: str = "C"
+    tags: list[str] = []
+    do_not_contact: bool = False
 
 
 class ApproveIn(BaseModel):
@@ -82,3 +85,38 @@ class ApproveIn(BaseModel):
 
 class RejectIn(BaseModel):
     note: str | None = None
+
+
+class ProfileOut(BaseModel):
+    id: str
+    email: str
+    name: str
+    phone: str = ""
+    company: str = ""
+    max_price_cents: int | None = None
+    markets: list[str] = []
+    asset_types: list[str] = []
+    email_alerts_enabled: bool = True
+    tier: str = "C"
+    tags: list[str] = []
+    do_not_contact: bool = False
+
+
+class ProfilePatch(BaseModel):
+    name: str | None = None
+    phone: str | None = None
+    company: str | None = None
+    email_alerts_enabled: bool | None = None
+
+
+class BuyBoxPut(BaseModel):
+    max_price_cents: int | None = None
+    markets: list[str] = []
+    asset_types: list[str] = []
+
+
+class BuyerPatch(BaseModel):
+    tier: str | None = None
+    tags: list[str] | None = None
+    do_not_contact: bool | None = None
+    company: str | None = None

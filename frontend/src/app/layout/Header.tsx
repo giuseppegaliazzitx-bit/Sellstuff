@@ -1,11 +1,21 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useConfig } from "../../shared/config";
 import { useAuth } from "../../shared/auth";
+import { apiJson } from "../../shared/api/client";
 
 export function Header() {
   const cfg = useConfig();
   const { user, logout } = useAuth();
+  const [unread, setUnread] = useState(0);
   const home = !user ? "/login" : user.status === "pending" ? "/waiting" : "/app/browse";
+
+  useEffect(() => {
+    if (!user || user.status !== "active") return;
+    apiJson<{ read: boolean }[]>("/api/v1/me/notifications")
+      .then((rows) => setUnread(rows.filter((n) => !n.read).length))
+      .catch(() => undefined);
+  }, [user]);
   return (
     <header className="bg-header text-white">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
@@ -44,9 +54,25 @@ export function Header() {
             </>
           ) : null}
           {user && user.status === "active" ? (
-            <Link to="/app/chat" className="text-neutral-200 hover:text-white">
-              Chat
-            </Link>
+            <>
+              <Link to="/app/saved" className="hidden text-neutral-200 hover:text-white sm:inline">
+                Saved
+              </Link>
+              <Link to="/app/offers" className="hidden text-neutral-200 hover:text-white sm:inline">
+                Offers
+              </Link>
+              <Link to="/app/chat" className="text-neutral-200 hover:text-white">
+                Chat
+              </Link>
+              <Link to="/app/notifications" className="relative text-neutral-200 hover:text-white">
+                Bell
+                {unread > 0 ? (
+                  <span className="absolute -right-2 -top-1 rounded-full bg-gold px-1 text-[10px] text-white">
+                    {unread}
+                  </span>
+                ) : null}
+              </Link>
+            </>
           ) : null}
           {user ? (
             <>

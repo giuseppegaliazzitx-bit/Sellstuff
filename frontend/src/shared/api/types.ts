@@ -38,6 +38,9 @@ export interface BuyerRow {
   lead_source: string | null;
   created_at: string;
   phone: string;
+  tier?: string;
+  tags?: string[];
+  do_not_contact?: boolean;
 }
 
 export interface SessionRow {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiJson, getCookie } from "../../shared/api/client";
 import { formatUsd } from "../../shared/money";
 import type { DealAdmin, MarketOut } from "../../shared/api/types";
@@ -80,7 +81,11 @@ export function AdminDealsPage() {
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className={`border-t ${r.days_to_close != null && r.days_to_close < 7 ? "bg-red-50" : ""}`}>
-              <td className="px-2 py-2">{r.address1}</td>
+              <td className="px-2 py-2">
+                <Link to={`/admin/deals/${r.id}`} className="text-gold hover:text-gold-hover">
+                  {r.address1}
+                </Link>
+              </td>
               <td className="px-2 py-2">{formatUsd(r.list_price_cents)}</td>
               <td className="px-2 py-2">{formatUsd(r.arv_cents)}</td>
               <td className="px-2 py-2">{formatUsd(r.rehab_high_cents)}</td>

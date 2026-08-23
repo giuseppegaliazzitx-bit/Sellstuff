@@ -7,7 +7,7 @@ from app.core.config import Settings
 from app.core.deps import enforce_csrf, get_db, get_kv, get_settings_dep, require_admin
 from app.core.kv import KV
 from app.models import User
-from app.schemas.auth import ApproveIn, BuyerOut, RejectIn
+from app.schemas.auth import ApproveIn, BuyerOut, BuyerPatch, RejectIn
 from app.services.auth import email_verification_required
 from app.services.users import approve_user, get_client, list_buyers, reject_user, suspend_user
 
@@ -27,6 +27,9 @@ def _to_out(user: User) -> BuyerOut:
         lead_source=profile.lead_source if profile else None,
         created_at=user.created_at,
         phone=user.phone_raw,
+        tier=profile.tier if profile else "C",
+        tags=list(profile.tags or []) if profile else [],
+        do_not_contact=bool(profile.do_not_contact) if profile else False,
     )
 
 
@@ -89,3 +92,34 @@ async def suspend(
     target = await get_client(session, user_id)
     updated = await suspend_user(session, kv, user=target)
     return _to_out(updated)
+
+
+@router.get("/{user_id}", response_model=BuyerOut)
+async def buyer_detail(
+    user_id: str,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> BuyerOut:
+    return _to_out(await get_client(session, user_id))
+
+
+@router.patch("/{user_id}", response_model=BuyerOut)
+async def buyer_patch(
+    user_id: str,
+    payload: BuyerPatch,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> BuyerOut:
+    user = await get_client(session, user_id)
+    data = payload.model_dump(exclude_unset=True)
+    if user.profile:
+        if "tier" in data and data["tier"]:
+            user.profile.tier = data["tier"]
+        if "tags" in data and data["tags"] is not None:
+            user.profile.tags = data["tags"]
+        if "do_not_contact" in data and data["do_not_contact"] is not None:
+            user.profile.do_not_contact = data["do_not_contact"]
+        if "company" in data and data["company"] is not None:
+            user.profile.company = data["company"]
+    await session.commit()
+    return _to_out(await get_client(session, user_id))

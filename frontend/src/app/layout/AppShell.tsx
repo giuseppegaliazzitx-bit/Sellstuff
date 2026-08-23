@@ -42,7 +42,18 @@ export function AppShell() {
         <Outlet />
       </main>
       <footer className="border-t border-neutral-200 bg-white px-4 py-6 text-center text-xs text-neutral-500">
-        © {new Date().getFullYear()} {legal}. Off-market inventory. Login required.
+        © {new Date().getFullYear()} {legal}. Off-market inventory.{" "}
+        <a href="/privacy" className="text-gold">
+          Privacy
+        </a>{" "}
+        ·{" "}
+        <a href="/terms" className="text-gold">
+          Terms
+        </a>{" "}
+        ·{" "}
+        <a href="/disclosures" className="text-gold">
+          Disclosures
+        </a>
       </footer>
     </div>
   );

@@ -77,7 +77,11 @@ export function BuyersPage() {
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t">
-                <td className="px-3 py-2">{row.name}</td>
+                <td className="px-3 py-2">
+                  <a href={`/admin/buyers/${row.id}`} className="text-gold">
+                    {row.name}
+                  </a>
+                </td>
                 <td className="px-3 py-2">{row.email}</td>
                 <td className="px-3 py-2">{row.status}</td>
                 <td className="px-3 py-2">{row.email_verified ? "yes" : "unverified"}</td>

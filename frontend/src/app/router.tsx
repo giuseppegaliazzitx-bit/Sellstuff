@@ -12,8 +12,14 @@ import { AdminDealsPage } from "../features/admin/DealsPage";
 import { MetricsPage } from "../features/admin/MetricsPage";
 import { BlastsPage } from "../features/admin/BlastsPage";
 import { PipelinePage } from "../features/admin/PipelinePage";
-import { SessionsPage } from "../features/settings/SessionsPage";
+import { DealEditorPage } from "../features/admin/DealEditorPage";
+import { BuyerDetailPage } from "../features/admin/BuyerDetailPage";
+import { SettingsPage } from "../features/settings/SettingsPage";
+import { SavedPage } from "../features/settings/SavedPage";
+import { MyOffersPage } from "../features/settings/OffersPage";
+import { NotificationsPage } from "../features/settings/NotificationsPage";
 import { ChatPage } from "../features/chat/ChatPage";
+import { LegalPage } from "../features/legal/LegalPages";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +27,9 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { index: true, element: <Navigate to="/login" replace /> },
+      { path: "privacy", element: <LegalPage kind="privacy" /> },
+      { path: "terms", element: <LegalPage kind="terms" /> },
+      { path: "disclosures", element: <LegalPage kind="disclosures" /> },
       {
         element: <GuestOnly />,
         children: [
@@ -38,7 +47,10 @@ export const router = createBrowserRouter([
         children: [
           { path: "app/browse", element: <BrowsePage /> },
           { path: "app/deals/:id", element: <DealPage /> },
-          { path: "app/settings", element: <SessionsPage /> },
+          { path: "app/settings", element: <SettingsPage /> },
+          { path: "app/saved", element: <SavedPage /> },
+          { path: "app/offers", element: <MyOffersPage /> },
+          { path: "app/notifications", element: <NotificationsPage /> },
           { path: "app/chat", element: <ChatPage /> },
         ],
       },
@@ -46,7 +58,9 @@ export const router = createBrowserRouter([
         element: <RequireAdmin />,
         children: [
           { path: "admin/buyers", element: <BuyersPage /> },
+          { path: "admin/buyers/:id", element: <BuyerDetailPage /> },
           { path: "admin/deals", element: <AdminDealsPage /> },
+          { path: "admin/deals/:id", element: <DealEditorPage /> },
           { path: "admin/metrics", element: <MetricsPage /> },
           { path: "admin/blasts", element: <BlastsPage /> },
           { path: "admin/offers", element: <PipelinePage /> },

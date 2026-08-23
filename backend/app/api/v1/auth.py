@@ -23,8 +23,11 @@ from app.core.security import new_jti
 from app.models import User
 from app.schemas.auth import (
     AcceptTermsIn,
+    BuyBoxPut,
     ForgotIn,
     LoginIn,
+    ProfileOut,
+    ProfilePatch,
     RegisterIn,
     ResetIn,
     SessionOut,
@@ -244,3 +247,65 @@ async def csrf_bootstrap(request: Request, response: Response) -> dict[str, bool
 
     set_csrf_cookie(response, settings, token_urlsafe(32))
     return {"ok": True}
+
+
+def _profile_out(user: User) -> ProfileOut:
+    p = user.profile
+    return ProfileOut(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        phone=user.phone_raw,
+        company=p.company if p else "",
+        max_price_cents=p.max_price_cents if p else None,
+        markets=list(p.markets or []) if p else [],
+        asset_types=list(p.asset_types or []) if p else [],
+        email_alerts_enabled=p.email_alerts_enabled if p else True,
+        tier=p.tier if p else "C",
+        tags=list(p.tags or []) if p else [],
+        do_not_contact=bool(p.do_not_contact) if p else False,
+    )
+
+
+@router.get("/me/profile", response_model=ProfileOut)
+async def get_profile(user: User = Depends(require_user)) -> ProfileOut:
+    return _profile_out(user)
+
+
+@router.patch("/me/profile", response_model=ProfileOut)
+async def patch_profile(
+    payload: ProfilePatch,
+    user: User = Depends(require_user),
+    session: AsyncSession = Depends(get_db),
+) -> ProfileOut:
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data and data["name"]:
+        user.name = data["name"]
+    if "phone" in data:
+        user.phone_raw = data["phone"] or ""
+    if user.profile:
+        if "company" in data:
+            user.profile.company = data["company"] or ""
+        if "email_alerts_enabled" in data and data["email_alerts_enabled"] is not None:
+            user.profile.email_alerts_enabled = data["email_alerts_enabled"]
+    await session.commit()
+    reloaded = await auth_service.load_user(session, user.id)
+    assert reloaded is not None
+    return _profile_out(reloaded)
+
+
+@router.put("/me/buy-box", response_model=ProfileOut)
+async def put_buy_box(
+    payload: BuyBoxPut,
+    user: User = Depends(require_user),
+    session: AsyncSession = Depends(get_db),
+) -> ProfileOut:
+    if user.profile is None:
+        raise AppError(400, "no_profile", "No buyer profile")
+    user.profile.max_price_cents = payload.max_price_cents
+    user.profile.markets = list(payload.markets)
+    user.profile.asset_types = list(payload.asset_types)
+    await session.commit()
+    reloaded = await auth_service.load_user(session, user.id)
+    assert reloaded is not None
+    return _profile_out(reloaded)

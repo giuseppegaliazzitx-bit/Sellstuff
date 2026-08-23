@@ -259,6 +259,23 @@ async def contact_event(
     return {"ok": True}
 
 
+@router.get("/me/saves", response_model=list[DealPublic])
+async def my_saves(
+    user: User = Depends(require_active),
+    session: AsyncSession = Depends(get_db),
+) -> list[DealPublic]:
+    ids = await saved_ids(session, user.id)
+    out = []
+    for did in ids:
+        try:
+            deal = await get_deal(session, did)
+        except AppError:
+            continue
+        if client_can_see(deal, tier=_tier(user)) or user.role == "admin":
+            out.append(to_public(deal, saved=True))
+    return out
+
+
 @router.get("/notices")
 async def notices(
     _user: User = Depends(require_user),

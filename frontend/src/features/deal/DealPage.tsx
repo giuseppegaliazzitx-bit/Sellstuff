@@ -14,6 +14,12 @@ export function DealPage() {
   const [deal, setDeal] = useState<DealPublic | null>(null);
   const [notices, setNotices] = useState<{ slug: string; title: string; body: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [docs, setDocs] = useState<{ id: string; kind: string; filename: string }[]>([]);
+  const [windows, setWindows] = useState<{ id: string; starts_at: string; capacity: number; status: string }[]>(
+    [],
+  );
+  const [light, setLight] = useState<string | null>(null);
+  const [mailMsg, setMailMsg] = useState<string | null>(null);
   const back = `/app/browse${loc.search}`;
 
   useEffect(() => {
@@ -24,6 +30,14 @@ export function DealPage() {
     apiJson<{ slug: string; title: string; body: string }[]>("/api/v1/notices")
       .then(setNotices)
       .catch(() => setNotices([]));
+    apiJson<{ id: string; kind: string; filename: string }[]>(`/api/v1/deals/${id}/documents`)
+      .then(setDocs)
+      .catch(() => setDocs([]));
+    apiJson<{ id: string; starts_at: string; capacity: number; status: string }[]>(
+      `/api/v1/deals/${id}/showing-windows`,
+    )
+      .then(setWindows)
+      .catch(() => setWindows([]));
   }, [id]);
 
   if (error) return <p className="p-8 text-sm text-red-700">{error}</p>;
@@ -88,9 +102,20 @@ export function DealPage() {
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
         {deal.photos.map((src) => (
-          <img key={src} src={src} alt="" className="h-36 w-full rounded object-cover" />
+          <button key={src} type="button" onClick={() => setLight(src)}>
+            <img src={src} alt="" className="h-36 w-full rounded object-cover" />
+          </button>
         ))}
       </div>
+      {light ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 flex items-center justify-center bg-black/80"
+          onClick={() => setLight(null)}
+        >
+          <img src={light} alt="" className="max-h-[90vh] max-w-[90vw]" />
+        </button>
+      ) : null}
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div>
           <p className="text-3xl font-semibold" data-testid="list-price">
@@ -125,6 +150,60 @@ export function DealPage() {
             I’m interested
           </button>
           <OfferBox dealId={deal.id} />
+          <form
+            className="mt-4 rounded border bg-white p-4 text-sm"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const body = String(new FormData(e.currentTarget).get("body") || "");
+              try {
+                await apiJson("/api/v1/mail/outbound", {
+                  method: "POST",
+                  body: JSON.stringify({ subject: `Re: ${deal.address1}`, body, lane: 1 }),
+                });
+                setMailMsg("Email queued (sandbox .eml if mail is blank).");
+              } catch (err) {
+                setMailMsg(err instanceof Error ? err.message : "Send failed");
+              }
+            }}
+          >
+            <p className="font-medium">Email the desk</p>
+            {mailMsg ? <p className="text-xs">{mailMsg}</p> : null}
+            <textarea name="body" required className="mt-2 w-full rounded border px-2 py-1" rows={3} />
+            <button type="submit" className="mt-2 rounded bg-header px-3 py-1 text-white">
+              Send
+            </button>
+          </form>
+          {windows.length ? (
+            <div className="mt-4 text-sm">
+              <p className="font-medium">Showings</p>
+              {windows.map((w) => (
+                <button
+                  key={w.id}
+                  type="button"
+                  className="mt-1 block text-gold"
+                  onClick={() =>
+                    apiJson(`/api/v1/showing-windows/${w.id}/rsvp`, { method: "POST", body: "{}" })
+                  }
+                >
+                  RSVP {new Date(w.starts_at).toLocaleString()}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {docs.length ? (
+            <div className="mt-4 text-sm">
+              <p className="font-medium">Documents</p>
+              {docs.map((d) => (
+                <a
+                  key={d.id}
+                  className="mt-1 block text-gold"
+                  href={`/api/v1/documents/${d.id}/download`}
+                >
+                  {d.filename}
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="mt-8">
