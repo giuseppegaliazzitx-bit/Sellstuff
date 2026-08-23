@@ -1,8 +1,11 @@
 from app.models.desk import (
     AuditLog,
+    BlastCampaign,
+    BlastRecipient,
     ContactEvent,
     DealAcknowledgment,
     Event,
+    GeocodeCache,
     ImportedBuyer,
     Interest,
     MailboxState,
@@ -30,6 +33,8 @@ from app.models.inventory import (
 
 __all__ = [
     "AuditLog",
+    "BlastCampaign",
+    "BlastRecipient",
     "BuyerProfile",
     "ContactEvent",
     "Deal",
@@ -39,6 +44,7 @@ __all__ = [
     "DealPriceHistory",
     "DealStatusHistory",
     "Event",
+    "GeocodeCache",
     "ImportedBuyer",
     "Interest",
     "MailboxState",

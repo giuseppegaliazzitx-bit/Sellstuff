@@ -52,29 +52,15 @@ async def threads(
     session: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     if user.role == "admin":
-        rows = (
-            (await session.execute(select(Thread).order_by(Thread.created_at.desc())))
-            .scalars()
-            .all()
-        )
+        rows = (await session.execute(select(Thread).order_by(Thread.created_at.desc()))).scalars().all()
     else:
         ids = (
-            (
-                await session.execute(
-                    select(ThreadParticipant.thread_id).where(ThreadParticipant.user_id == user.id)
-                )
-            )
+            (await session.execute(select(ThreadParticipant.thread_id).where(ThreadParticipant.user_id == user.id)))
             .scalars()
             .all()
         )
-        rows = (
-            (await session.execute(select(Thread).where(Thread.id.in_(ids or ["__none__"]))))
-            .scalars()
-            .all()
-        )
-    return [
-        {"id": t.id, "subject": t.subject, "deal_id": t.deal_id, "channel": t.channel} for t in rows
-    ]
+        rows = (await session.execute(select(Thread).where(Thread.id.in_(ids or ["__none__"])))).scalars().all()
+    return [{"id": t.id, "subject": t.subject, "deal_id": t.deal_id, "channel": t.channel} for t in rows]
 
 
 @router.post("/threads")
@@ -97,9 +83,7 @@ async def create_thread(
     session.add(ThreadParticipant(id=new_id(), thread_id=thread.id, user_id=user.id))
     seen.add(user.id)
     admins = (
-        (await session.execute(select(User).where(User.role == "admin", User.deleted_at.is_(None))))
-        .scalars()
-        .all()
+        (await session.execute(select(User).where(User.role == "admin", User.deleted_at.is_(None)))).scalars().all()
     )
     for admin in admins:
         if admin.id in seen:
@@ -143,11 +127,7 @@ async def list_messages(
     if part is None and user.role != "admin":
         raise AppError(403, "forbidden", "Not a participant")
     rows = (
-        (
-            await session.execute(
-                select(Message).where(Message.thread_id == thread_id).order_by(Message.created_at)
-            )
-        )
+        (await session.execute(select(Message).where(Message.thread_id == thread_id).order_by(Message.created_at)))
         .scalars()
         .all()
     )
@@ -201,9 +181,7 @@ async def my_notes(
     rows = (
         (
             await session.execute(
-                select(Notification)
-                .where(Notification.user_id == user.id)
-                .order_by(Notification.created_at.desc())
+                select(Notification).where(Notification.user_id == user.id).order_by(Notification.created_at.desc())
             )
         )
         .scalars()
@@ -228,9 +206,7 @@ async def read_note(
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     row = (
-        await session.execute(
-            select(Notification).where(Notification.id == nid, Notification.user_id == user.id)
-        )
+        await session.execute(select(Notification).where(Notification.id == nid, Notification.user_id == user.id))
     ).scalar_one_or_none()
     if row:
         row.read_at = _now()
@@ -296,10 +272,7 @@ async def my_offers(
     session: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     rows = (await session.execute(select(Offer).where(Offer.user_id == user.id))).scalars().all()
-    return [
-        {"id": o.id, "deal_id": o.deal_id, "amount_cents": o.amount_cents, "status": o.status}
-        for o in rows
-    ]
+    return [{"id": o.id, "deal_id": o.deal_id, "amount_cents": o.amount_cents, "status": o.status} for o in rows]
 
 
 @router.post("/offers/{offer_id}/withdraw")
@@ -389,11 +362,7 @@ async def windows(
     _user: User = Depends(require_active),
     session: AsyncSession = Depends(get_db),
 ) -> list[dict]:
-    rows = (
-        (await session.execute(select(ShowingWindow).where(ShowingWindow.deal_id == deal_id)))
-        .scalars()
-        .all()
-    )
+    rows = (await session.execute(select(ShowingWindow).where(ShowingWindow.deal_id == deal_id))).scalars().all()
     return [
         {
             "id": w.id,
@@ -436,33 +405,25 @@ async def rsvp(
     user: User = Depends(require_active),
     session: AsyncSession = Depends(get_db),
 ) -> dict:
-    win = (
-        await session.execute(select(ShowingWindow).where(ShowingWindow.id == window_id))
-    ).scalar_one_or_none()
+    win = (await session.execute(select(ShowingWindow).where(ShowingWindow.id == window_id))).scalar_one_or_none()
     if win is None:
         raise AppError(404, "not_found", "Window not found")
     count = (
         await session.execute(
-            select(func.count()).where(
-                ShowingRsvp.window_id == window_id, ShowingRsvp.status != "declined"
-            )
+            select(func.count()).where(ShowingRsvp.window_id == window_id, ShowingRsvp.status != "declined")
         )
     ).scalar_one()
     if int(count or 0) >= win.capacity:
         raise AppError(409, "window_full", "This window is full")
     existing = (
         await session.execute(
-            select(ShowingRsvp).where(
-                ShowingRsvp.window_id == window_id, ShowingRsvp.user_id == user.id
-            )
+            select(ShowingRsvp).where(ShowingRsvp.window_id == window_id, ShowingRsvp.user_id == user.id)
         )
     ).scalar_one_or_none()
     if existing:
         existing.status = "confirmed"
     else:
-        session.add(
-            ShowingRsvp(id=new_id(), window_id=window_id, user_id=user.id, status="confirmed")
-        )
+        session.add(ShowingRsvp(id=new_id(), window_id=window_id, user_id=user.id, status="confirmed"))
     await session.commit()
     return {"ok": True}
 
@@ -475,9 +436,7 @@ async def rsvp_delete(
 ) -> dict:
     existing = (
         await session.execute(
-            select(ShowingRsvp).where(
-                ShowingRsvp.window_id == window_id, ShowingRsvp.user_id == user.id
-            )
+            select(ShowingRsvp).where(ShowingRsvp.window_id == window_id, ShowingRsvp.user_id == user.id)
         )
     ).scalar_one_or_none()
     if existing:
@@ -510,11 +469,7 @@ async def list_notes(
     session: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     rows = (
-        (
-            await session.execute(
-                select(UserNote).where(UserNote.user_id == user_id).order_by(UserNote.created_at)
-            )
-        )
+        (await session.execute(select(UserNote).where(UserNote.user_id == user_id).order_by(UserNote.created_at)))
         .scalars()
         .all()
     )
@@ -537,9 +492,7 @@ async def mail_status(
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     settings = request.app.state.settings
-    dead = (
-        await session.execute(select(func.count()).where(Outbox.dead_at.is_not(None)))
-    ).scalar_one()
+    dead = (await session.execute(select(func.count()).where(Outbox.dead_at.is_not(None)))).scalar_one()
     return {
         "configured": settings.mail_configured,
         "sandbox": not settings.mail_configured,
@@ -559,16 +512,14 @@ async def mail_out(
 ) -> dict:
     settings = request.app.state.settings
     lane = int(payload.get("lane") or 2)
-    if lane == 2 and not settings.public_mailing_address and settings.mail_configured:
+    if lane == 2 and not settings.public_mailing_address:
         raise AppError(409, "mailing_address_required", "Set PUBLIC_MAILING_ADDRESS before blasts")
+    from app.integrations.mail import build_mail_provider
+
     body = str(payload.get("body") or "Hello")
     to_addr = str(payload.get("to") or settings.public_support_email or "sandbox@localhost")
-    eml_name = f"{new_id()}.eml"
-    dest = __import__("pathlib").Path(settings.local_media_dir) / "eml"
-    dest.mkdir(parents=True, exist_ok=True)
-    (dest / eml_name).write_text(
-        f"To: {to_addr}\nSubject: {payload.get('subject')}\n\n{body}", encoding="utf-8"
-    )
+    provider = build_mail_provider(settings)
+    eml_name = provider.send(to_addr=to_addr, subject=str(payload.get("subject") or ""), body=body)
     session.add(
         Outbox(
             id=new_id(),
@@ -594,11 +545,7 @@ async def metrics(
     for d in deals:
         by_status[d.status] = by_status.get(d.status, 0) + 1
         if d.contract_close_by:
-            close = (
-                d.contract_close_by
-                if d.contract_close_by.tzinfo
-                else d.contract_close_by.replace(tzinfo=UTC)
-            )
+            close = d.contract_close_by if d.contract_close_by.tzinfo else d.contract_close_by.replace(tzinfo=UTC)
             days = int((close - now).total_seconds() // 86400)
             clock.append(
                 {
@@ -641,9 +588,7 @@ async def unsubscribe(token: str, request: Request, session: AsyncSession = Depe
         raise AppError(400, "token_invalid", "Invalid unsubscribe token") from None
     if claims.get("typ") == "access":
         raise AppError(400, "token_invalid", "Wrong token type")
-    user = (
-        await session.execute(select(User).where(User.id == str(claims["sub"])))
-    ).scalar_one_or_none()
+    user = (await session.execute(select(User).where(User.id == str(claims["sub"])))).scalar_one_or_none()
     if user and user.profile:
         user.profile.email_alerts_enabled = False
         await session.commit()

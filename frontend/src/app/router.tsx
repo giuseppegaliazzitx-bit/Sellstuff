@@ -10,6 +10,8 @@ import { DealPage } from "../features/deal/DealPage";
 import { BuyersPage } from "../features/admin/BuyersPage";
 import { AdminDealsPage } from "../features/admin/DealsPage";
 import { MetricsPage } from "../features/admin/MetricsPage";
+import { BlastsPage } from "../features/admin/BlastsPage";
+import { PipelinePage } from "../features/admin/PipelinePage";
 import { SessionsPage } from "../features/settings/SessionsPage";
 import { ChatPage } from "../features/chat/ChatPage";
 
@@ -46,6 +48,8 @@ export const router = createBrowserRouter([
           { path: "admin/buyers", element: <BuyersPage /> },
           { path: "admin/deals", element: <AdminDealsPage /> },
           { path: "admin/metrics", element: <MetricsPage /> },
+          { path: "admin/blasts", element: <BlastsPage /> },
+          { path: "admin/offers", element: <PipelinePage /> },
         ],
       },
     ],

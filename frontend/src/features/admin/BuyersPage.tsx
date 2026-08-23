@@ -25,6 +25,30 @@ export function BuyersPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="text-2xl font-semibold">Buyers</h1>
+      <form
+        className="mt-4 rounded border bg-white p-3 text-sm"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const csv = String(new FormData(e.currentTarget).get("csv") || "");
+          const preview = await apiJson<{ valid: unknown[]; errors: unknown[] }>(
+            "/api/v1/admin/users/import",
+            { method: "POST", body: JSON.stringify({ csv }) },
+          );
+          await apiJson("/api/v1/admin/users/import/commit", {
+            method: "POST",
+            body: JSON.stringify({ rows: preview.valid }),
+          });
+          setError(
+            `Imported ${preview.valid.length}. ${preview.errors.length} row(s) skipped.`,
+          );
+        }}
+      >
+        <p className="mb-1 text-xs text-neutral-500">CSV: email,name,phone,tier</p>
+        <textarea name="csv" rows={3} className="w-full rounded border px-2 py-1 font-mono text-xs" />
+        <button type="submit" className="mt-2 rounded bg-gold px-3 py-1 text-white">
+          Import
+        </button>
+      </form>
       <div className="mt-4 flex gap-2 text-sm">
         {["pending", "active", "rejected", "suspended", ""].map((s) => (
           <button

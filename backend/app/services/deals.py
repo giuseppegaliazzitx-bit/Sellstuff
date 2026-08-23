@@ -79,9 +79,7 @@ def to_public(deal: Deal, *, saved: bool = False) -> DealPublic:
     reduced = None
     for row in deal.price_history:
         if row.new_cents < row.old_cents:
-            reductions.append(
-                PriceHistoryPublic(old_cents=row.old_cents, new_cents=row.new_cents, at=row.at)
-            )
+            reductions.append(PriceHistoryPublic(old_cents=row.old_cents, new_cents=row.new_cents, at=row.at))
             reduced = row.old_cents - row.new_cents
     return DealPublic(
         id=deal.id,
@@ -183,11 +181,7 @@ async def list_public_deals(
     occupancy: str | None = None,
     tier: str = "C",
 ) -> list[Deal]:
-    stmt = (
-        select(Deal)
-        .options(*_deal_load())
-        .where(Deal.deleted_at.is_(None), Deal.status.in_(CLIENT_VISIBLE))
-    )
+    stmt = select(Deal).options(*_deal_load()).where(Deal.deleted_at.is_(None), Deal.status.in_(CLIENT_VISIBLE))
     if market_id:
         stmt = stmt.where(Deal.market_id == market_id)
     if price_min is not None:
@@ -215,9 +209,7 @@ def sort_deals(deals: list[Deal], sort: str) -> list[Deal]:
     return sorted(deals, key=lambda d: d.created_at, reverse=True)
 
 
-async def list_admin_deals(
-    session: AsyncSession, *, deleted: bool = False, q: str | None = None
-) -> list[Deal]:
+async def list_admin_deals(session: AsyncSession, *, deleted: bool = False, q: str | None = None) -> list[Deal]:
     stmt = select(Deal).options(*_deal_load())
     if deleted:
         stmt = stmt.where(Deal.deleted_at.is_not(None))
@@ -262,12 +254,11 @@ async def create_deal(session: AsyncSession, payload: DealCreate, actor_id: str)
     return await get_deal(session, deal.id)
 
 
-async def patch_deal(
-    session: AsyncSession, deal: Deal, payload: DealPatch, actor_id: str, ip: str = ""
-) -> Deal:
+async def patch_deal(session: AsyncSession, deal: Deal, payload: DealPatch, actor_id: str, ip: str = "") -> Deal:
     now = _now()
     data = payload.model_dump(exclude_unset=True)
     diffs: dict = {}
+    notify = False
     if "list_price_cents" in data and data["list_price_cents"] != deal.list_price_cents:
         old = deal.list_price_cents
         hist_row = DealPriceHistory(
@@ -293,10 +284,12 @@ async def patch_deal(
                 at=now,
             )
         )
-        if data["status"] == "available" and deal.published_at is None:
+        if data["status"] == "available":
             if not deal.photos:
                 raise AppError(422, "photo_required", "Publish requires at least one photo")
-            deal.published_at = now
+            if deal.published_at is None:
+                deal.published_at = now
+            notify = True
         diffs["status"] = [deal.status, data["status"]]
     if "lockbox_code" in data:
         session.add(
@@ -328,7 +321,13 @@ async def patch_deal(
             )
         )
     await session.commit()
-    return await get_deal(session, deal.id)
+    deal_id = deal.id
+    if notify:
+        from app.services.match import notify_matches
+
+        deal = await get_deal(session, deal_id)
+        await notify_matches(session, deal)
+    return await get_deal(session, deal_id)
 
 
 async def soft_delete(session: AsyncSession, deal: Deal) -> None:
@@ -358,9 +357,7 @@ async def to_pins(deals: list[Deal]) -> list[MapPin]:
 
 
 async def list_markets(session: AsyncSession) -> list[Market]:
-    return list(
-        (await session.execute(select(Market).where(Market.is_active.is_(True)))).scalars().all()
-    )
+    return list((await session.execute(select(Market).where(Market.is_active.is_(True)))).scalars().all())
 
 
 async def log_event(
@@ -385,7 +382,5 @@ async def log_event(
 
 
 async def saved_ids(session: AsyncSession, user_id: str) -> set[str]:
-    rows = (
-        await session.execute(select(SavedDeal.deal_id).where(SavedDeal.user_id == user_id))
-    ).all()
+    rows = (await session.execute(select(SavedDeal.deal_id).where(SavedDeal.user_id == user_id))).all()
     return {r[0] for r in rows}

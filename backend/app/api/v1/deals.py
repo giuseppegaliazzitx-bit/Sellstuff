@@ -155,18 +155,14 @@ async def download_doc(
     user: User = Depends(require_active),
     session: AsyncSession = Depends(get_db),
 ):
-    doc = (
-        await session.execute(select(DealDocument).where(DealDocument.id == doc_id))
-    ).scalar_one_or_none()
+    doc = (await session.execute(select(DealDocument).where(DealDocument.id == doc_id))).scalar_one_or_none()
     if doc is None:
         raise AppError(404, "not_found", "Document not found")
     deal = await get_deal(session, doc.deal_id)
     if not client_can_see(deal, tier=_tier(user)) and user.role != "admin":
         raise AppError(404, "not_found", "Deal not found")
     doc.download_count += 1
-    await log_event(
-        session, "doc.downloaded", user_id=user.id, deal_id=deal.id, payload={"doc_id": doc.id}
-    )
+    await log_event(session, "doc.downloaded", user_id=user.id, deal_id=deal.id, payload={"doc_id": doc.id})
     storage = build_storage(request.app.state.settings)
     path = storage.root / doc.storage_key
     if not path.exists():
@@ -181,14 +177,10 @@ async def save_deal(
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     existing = (
-        await session.execute(
-            select(SavedDeal).where(SavedDeal.user_id == user.id, SavedDeal.deal_id == deal_id)
-        )
+        await session.execute(select(SavedDeal).where(SavedDeal.user_id == user.id, SavedDeal.deal_id == deal_id))
     ).scalar_one_or_none()
     if existing is None:
-        session.add(
-            SavedDeal(id=new_id(), user_id=user.id, deal_id=deal_id, created_at=datetime.now(UTC))
-        )
+        session.add(SavedDeal(id=new_id(), user_id=user.id, deal_id=deal_id, created_at=datetime.now(UTC)))
         await session.commit()
     return {"saved": True}
 
@@ -200,9 +192,7 @@ async def unsave_deal(
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     existing = (
-        await session.execute(
-            select(SavedDeal).where(SavedDeal.user_id == user.id, SavedDeal.deal_id == deal_id)
-        )
+        await session.execute(select(SavedDeal).where(SavedDeal.user_id == user.id, SavedDeal.deal_id == deal_id))
     ).scalar_one_or_none()
     if existing:
         await session.delete(existing)
@@ -217,14 +207,10 @@ async def interest(
     session: AsyncSession = Depends(get_db),
 ) -> dict:
     existing = (
-        await session.execute(
-            select(Interest).where(Interest.user_id == user.id, Interest.deal_id == deal_id)
-        )
+        await session.execute(select(Interest).where(Interest.user_id == user.id, Interest.deal_id == deal_id))
     ).scalar_one_or_none()
     if existing is None:
-        session.add(
-            Interest(id=new_id(), user_id=user.id, deal_id=deal_id, created_at=datetime.now(UTC))
-        )
+        session.add(Interest(id=new_id(), user_id=user.id, deal_id=deal_id, created_at=datetime.now(UTC)))
         await session.commit()
     return {"interested": True}
 
@@ -236,9 +222,7 @@ async def acknowledge(
     user: User = Depends(require_active),
     session: AsyncSession = Depends(get_db),
 ) -> dict:
-    notice = (
-        await session.execute(select(Notice).where(Notice.slug == "tx-equitable-interest"))
-    ).scalar_one_or_none()
+    notice = (await session.execute(select(Notice).where(Notice.slug == "tx-equitable-interest"))).scalar_one_or_none()
     version = notice.notice_version if notice else "1"
     session.add(
         DealAcknowledgment(
@@ -281,7 +265,4 @@ async def notices(
     session: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     rows = (await session.execute(select(Notice))).scalars().all()
-    return [
-        {"slug": n.slug, "title": n.title, "body": n.body, "notice_version": n.notice_version}
-        for n in rows
-    ]
+    return [{"slug": n.slug, "title": n.title, "body": n.body, "notice_version": n.notice_version} for n in rows]

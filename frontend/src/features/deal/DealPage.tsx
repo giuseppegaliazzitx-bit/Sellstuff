@@ -69,6 +69,21 @@ export function DealPage() {
           <Link to={`/app/chat?deal=${deal.id}`} className="text-gold">
             Chat
           </Link>
+          <button
+            type="button"
+            className="text-gold"
+            onClick={async () => {
+              if (deal.saved) {
+                await apiJson(`/api/v1/deals/${deal.id}/saves`, { method: "DELETE" });
+                setDeal({ ...deal, saved: false });
+              } else {
+                await apiJson(`/api/v1/deals/${deal.id}/saves`, { method: "POST", body: "{}" });
+                setDeal({ ...deal, saved: true });
+              }
+            }}
+          >
+            {deal.saved ? "★ Saved" : "☆ Save"}
+          </button>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">

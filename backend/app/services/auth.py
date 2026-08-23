@@ -16,7 +16,7 @@ from app.core.errors import AppError
 from app.core.kv import KV, MemoryLimiter
 from app.core.passwords import PasswordError, hash_password, verify_password
 from app.core.security import TokenError, decode_jwt, encode_jwt
-from app.models import BuyerProfile, RefreshToken, TermsAcceptance, User, new_id
+from app.models import BuyerProfile, ImportedBuyer, RefreshToken, TermsAcceptance, User, new_id
 from app.schemas.auth import RegisterIn, UserOut
 
 LOGIN_LIMIT = 10
@@ -150,7 +150,14 @@ async def register_user(
     except PasswordError as exc:
         raise AppError(422, exc.code, str(exc)) from exc
 
+    imported = (
+        await session.execute(
+            select(ImportedBuyer).where(ImportedBuyer.email == email, ImportedBuyer.claimed_user_id.is_(None))
+        )
+    ).scalar_one_or_none()
     status = "pending" if settings.require_admin_approval else "active"
+    if imported:
+        status = "active"
     now = _now()
     user = User(
         id=new_id(),
@@ -174,9 +181,12 @@ async def register_user(
             max_price_cents=payload.max_purchase_price_cents,
             asset_types=list(payload.asset_types),
             markets=list(payload.markets),
-            lead_source=payload.lead_source,
+            lead_source="import" if imported else payload.lead_source,
+            tier=imported.tier if imported else "C",
         )
     )
+    if imported:
+        imported.claimed_user_id = user.id
     session.add(
         TermsAcceptance(
             id=new_id(),
@@ -281,11 +291,7 @@ async def rotate_refresh(
 
 async def _revoke_family(session: AsyncSession, family_id: str) -> None:
     now = _now()
-    rows = (
-        (await session.execute(select(RefreshToken).where(RefreshToken.family_id == family_id)))
-        .scalars()
-        .all()
-    )
+    rows = (await session.execute(select(RefreshToken).where(RefreshToken.family_id == family_id))).scalars().all()
     for row in rows:
         if row.revoked_at is None:
             row.revoked_at = now
@@ -336,13 +342,9 @@ async def authenticate_access(
     return user, claims
 
 
-async def issue_reset_token(
-    session: AsyncSession, settings: Settings, kv: KV, email: str
-) -> str | None:
+async def issue_reset_token(session: AsyncSession, settings: Settings, kv: KV, email: str) -> str | None:
     user = (
-        await session.execute(
-            select(User).where(User.email == email.lower(), User.deleted_at.is_(None))
-        )
+        await session.execute(select(User).where(User.email == email.lower(), User.deleted_at.is_(None)))
     ).scalar_one_or_none()
     if user is None:
         return None
@@ -383,11 +385,7 @@ async def consume_reset(
         raise AppError(422, exc.code, str(exc)) from exc
     await kv.setex(f"tok:{claims['jti']}", 30 * 60, "used")
     await bump_ver(session, kv, user)
-    families = (
-        (await session.execute(select(RefreshToken).where(RefreshToken.user_id == user.id)))
-        .scalars()
-        .all()
-    )
+    families = (await session.execute(select(RefreshToken).where(RefreshToken.user_id == user.id))).scalars().all()
     now = _now()
     for row in families:
         if row.revoked_at is None:
@@ -417,9 +415,7 @@ async def consume_verify_email(
     return user
 
 
-async def list_sessions(
-    session: AsyncSession, user_id: str, _current_sid: str
-) -> list[RefreshToken]:
+async def list_sessions(session: AsyncSession, user_id: str, _current_sid: str) -> list[RefreshToken]:
     stmt = (
         select(RefreshToken)
         .where(
@@ -434,9 +430,7 @@ async def list_sessions(
 
 async def revoke_session(session: AsyncSession, user_id: str, token_id: str) -> None:
     row = (
-        await session.execute(
-            select(RefreshToken).where(RefreshToken.id == token_id, RefreshToken.user_id == user_id)
-        )
+        await session.execute(select(RefreshToken).where(RefreshToken.id == token_id, RefreshToken.user_id == user_id))
     ).scalar_one_or_none()
     if row is None:
         raise AppError(404, "not_found", "Session not found")

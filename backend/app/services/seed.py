@@ -86,9 +86,7 @@ def seed_product(settings: Settings) -> None:
             for i, (addr, price, arv, rehab, days, drop, lat, lng) in enumerate(SEED_HOUSES):
                 deal_id = new_id()
                 photo_id = new_id()
-                close_by = (
-                    now + timedelta(days=days) if days <= 7 or i < 2 else now + timedelta(days=days)
-                )
+                close_by = now + timedelta(days=days) if days <= 7 or i < 2 else now + timedelta(days=days)
                 key = f"photos/{deal_id}/{photo_id}_card.jpg"
                 (root / key).parent.mkdir(parents=True, exist_ok=True)
                 (root / key).write_bytes(jpeg)

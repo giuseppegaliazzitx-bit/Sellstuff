@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
@@ -205,3 +205,43 @@ class MailboxState(Base):
     last_error: Mapped[str] = mapped_column(Text, default="")
     sent_today: Mapped[int] = mapped_column(Integer, default=0)
     sent_day: Mapped[str] = mapped_column(String(10), default="")
+
+
+class BlastCampaign(Base):
+    __tablename__ = "blast_campaigns"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    deal_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("deals.id"), nullable=True)
+    created_by: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"))
+    subject: Mapped[str] = mapped_column(String(200))
+    body_template: Mapped[str] = mapped_column(Text, default="")
+    segment: Mapped[dict] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(16), default="draft")
+    total: Mapped[int] = mapped_column(Integer, default=0)
+    sent: Mapped[int] = mapped_column(Integer, default=0)
+    clicked: Mapped[int] = mapped_column(Integer, default=0)
+    estimated_finish_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class BlastRecipient(Base):
+    __tablename__ = "blast_recipients"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    campaign_id: Mapped[str] = mapped_column(String(36), ForeignKey("blast_campaigns.id"), index=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True)
+    outbox_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    clicked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error: Mapped[str] = mapped_column(Text, default="")
+    bounced: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class GeocodeCache(Base):
+    __tablename__ = "geocode_cache"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    query: Mapped[str] = mapped_column(String(400), unique=True)
+    lat: Mapped[float] = mapped_column(Float)
+    lng: Mapped[float] = mapped_column(Float)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

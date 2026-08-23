@@ -48,9 +48,7 @@ def client_ip(request: Request) -> str:
     return "unknown"
 
 
-def _extract_access(
-    request: Request, settings: Settings, creds: HTTPAuthorizationCredentials | None
-) -> str | None:
+def _extract_access(request: Request, settings: Settings, creds: HTTPAuthorizationCredentials | None) -> str | None:
     if creds and creds.scheme.lower() == "bearer":
         return creds.credentials
     names = cookie_names(settings)

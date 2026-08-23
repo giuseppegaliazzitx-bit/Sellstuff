@@ -17,9 +17,7 @@ async def test_healthz_200_when_db_pings(client: AsyncClient) -> None:
 
 
 async def test_healthz_503_when_database_url_is_wrong() -> None:
-    settings = get_settings().model_copy(
-        update={"database_url": "postgresql+psycopg://nope:nope@127.0.0.1:1/nope"}
-    )
+    settings = get_settings().model_copy(update={"database_url": "postgresql+psycopg://nope:nope@127.0.0.1:1/nope"})
     app = create_app(settings)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

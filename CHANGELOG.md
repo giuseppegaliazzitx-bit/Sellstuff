@@ -11,3 +11,4 @@ Versioning: `v0.NN.0` per phase; Phase 12 is `v1.0.0`.
 - Phase 0 platform skeleton: FastAPI health/version/public-config, Vite SPA shell with runtime brand, Alembic baseline, local-first SQLite, Docker files for later.
 - Phase 1 auth: open register, JWT cookies, rotating refresh, CSRF, pending approval, waiting room, admin buyers, sessions.
 - Phases 2–10 product: inventory (DealPublic vs DealAdmin), OSM browse, deal detail, chat, sandbox mail, offers/showings, CRM notes, metrics/contract clock. Docker files remain for Phase 12.
+- Buyer CSV import + claim-on-register, buy-box matching on publish, sandbox blasts with send cap estimate, Nominatim geocode (mockable), admin photo/status/geocode, offer pipeline, watchlist.

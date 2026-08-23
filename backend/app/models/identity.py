@@ -25,17 +25,13 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(200))
     phone_raw: Mapped[str] = mapped_column(String(40), default="")
     token_version: Mapped[int] = mapped_column(Integer, default=1)
-    email_verified_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     sms_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    approved_by_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=True
-    )
+    approved_by_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
 
     profile: Mapped[BuyerProfile | None] = relationship(back_populates="user", uselist=False)
     refresh_tokens: Mapped[list[RefreshToken]] = relationship(back_populates="user")
@@ -70,9 +66,7 @@ class RefreshToken(Base):
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True)
     family_id: Mapped[str] = mapped_column(String(36), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    parent_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("refresh_tokens.id"), nullable=True
-    )
+    parent_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("refresh_tokens.id"), nullable=True)
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiJson } from "../../shared/api/client";
+import { apiJson, getCookie } from "../../shared/api/client";
 import { formatUsd } from "../../shared/money";
 import type { DealAdmin, MarketOut } from "../../shared/api/types";
 
@@ -74,6 +74,7 @@ export function AdminDealsPage() {
             <th className="px-2 py-2">Rehab</th>
             <th className="px-2 py-2">Clock</th>
             <th className="px-2 py-2">Status</th>
+            <th className="px-2 py-2" />
           </tr>
         </thead>
         <tbody>
@@ -84,7 +85,64 @@ export function AdminDealsPage() {
               <td className="px-2 py-2">{formatUsd(r.arv_cents)}</td>
               <td className="px-2 py-2">{formatUsd(r.rehab_high_cents)}</td>
               <td className="px-2 py-2">{r.days_to_close != null ? `${r.days_to_close} days` : "—"}</td>
-              <td className="px-2 py-2">{r.status}</td>
+              <td className="px-2 py-2">
+                <select
+                  value={r.status}
+                  className="rounded border text-xs"
+                  onChange={async (e) => {
+                    try {
+                      await apiJson(`/api/v1/admin/deals/${r.id}`, {
+                        method: "PATCH",
+                        body: JSON.stringify({ status: e.target.value }),
+                      });
+                      await load();
+                    } catch (err) {
+                      setMsg(err instanceof Error ? err.message : "Status failed");
+                    }
+                  }}
+                >
+                  {["coming_soon", "available", "pending", "under_contract", "assigned", "closed", "dead"].map(
+                    (s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </td>
+              <td className="px-2 py-2">
+                <label className="text-xs text-gold">
+                  Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const fd = new FormData();
+                      fd.append("file", file);
+                      await fetch(`/api/v1/admin/deals/${r.id}/photos`, {
+                        method: "POST",
+                        credentials: "include",
+                        headers: { "X-CSRF-Token": getCookie("csrf") },
+                        body: fd,
+                      });
+                      await load();
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="ml-2 text-xs text-gold"
+                  onClick={async () => {
+                    await apiJson(`/api/v1/admin/deals/${r.id}/geocode`, { method: "POST", body: "{}" });
+                    await load();
+                  }}
+                >
+                  Geocode
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

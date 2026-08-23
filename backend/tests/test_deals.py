@@ -104,9 +104,7 @@ async def test_admin_json_has_desk_fields_client_does_not(admin_env, settings) -
     created = await _create_deal(client, token, market_id)
     deal_id = created["id"]
     files = {"file": ("a.jpg", _jpeg(), "image/jpeg")}
-    up = await client.post(
-        f"/api/v1/admin/deals/{deal_id}/photos", headers=_auth(token), files=files
-    )
+    up = await client.post(f"/api/v1/admin/deals/{deal_id}/photos", headers=_auth(token), files=files)
     assert up.status_code == 200, up.text
     await client.patch(
         f"/api/v1/admin/deals/{deal_id}",
@@ -132,9 +130,7 @@ async def test_admin_json_has_desk_fields_client_does_not(admin_env, settings) -
     buyers = await client.get("/api/v1/admin/buyers", headers=_auth(token))
     bid = next(b["id"] for b in buyers.json() if b["email"] == "buyer@example.com")
     await client.post(f"/api/v1/admin/buyers/{bid}/approve", headers=_auth(token), json={})
-    await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     buyer_token = client.cookies.get("access")
     pub = await client.get(f"/api/v1/deals/{deal_id}", headers=_auth(buyer_token))
     assert pub.status_code == 200, pub.text
@@ -163,9 +159,7 @@ async def test_pending_forbidden(admin_env) -> None:
             "terms_version": "2026-08-22",
         },
     )
-    await client.post(
-        "/api/v1/auth/login", json={"email": "pend@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "pend@example.com", "password": PASSWORD})
     res = await client.get("/api/v1/deals")
     assert res.status_code == 403
 
@@ -212,9 +206,7 @@ async def test_publish_without_photo_and_price_history(admin_env) -> None:
     assert bad.status_code == 422
     files = {"file": ("a.jpg", _jpeg(), "image/jpeg")}
     assert (
-        await client.post(
-            f"/api/v1/admin/deals/{deal_id}/photos", headers=_auth(token), files=files
-        )
+        await client.post(f"/api/v1/admin/deals/{deal_id}/photos", headers=_auth(token), files=files)
     ).status_code == 200
     ok = await client.patch(
         f"/api/v1/admin/deals/{deal_id}",

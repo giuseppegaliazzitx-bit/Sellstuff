@@ -42,7 +42,5 @@ def test_env_example_covers_settings() -> None:
     settings = _settings_keys()
     missing_in_example = settings - example
     extra_in_example = example - settings
-    assert missing_in_example == set(), (
-        f"Settings fields missing from .env.example: {missing_in_example}"
-    )
+    assert missing_in_example == set(), f"Settings fields missing from .env.example: {missing_in_example}"
     assert extra_in_example == set(), f".env.example keys missing from Settings: {extra_in_example}"

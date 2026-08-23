@@ -67,7 +67,9 @@ class Settings(BaseSettings):
     mail_rate_per_minute: int = 20
 
     map_tile_url: str = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-    map_sat_tile_url: str = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    map_sat_tile_url: str = (
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    )
     nominatim_url: str = "https://nominatim.openstreetmap.org"
     nominatim_user_agent: str = "NorthstarDispo/1.0 (contact: support@localhost)"
 

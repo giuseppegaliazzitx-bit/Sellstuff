@@ -32,6 +32,12 @@ export function Header() {
               <Link to="/admin/buyers" className="text-neutral-200 hover:text-white">
                 Buyers
               </Link>
+              <Link to="/admin/offers" className="hidden text-neutral-200 hover:text-white sm:inline">
+                Offers
+              </Link>
+              <Link to="/admin/blasts" className="hidden text-neutral-200 hover:text-white sm:inline">
+                Blasts
+              </Link>
               <Link to="/admin/metrics" className="hidden text-neutral-200 hover:text-white sm:inline">
                 Metrics
               </Link>

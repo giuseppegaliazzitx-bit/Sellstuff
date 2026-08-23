@@ -32,9 +32,7 @@ async def test_chat_and_mail_sandbox(settings) -> None:
         tid = thread.json()["id"]
         empty = await client.post(f"/api/v1/threads/{tid}/messages", headers=h, json={"body": "  "})
         assert empty.status_code == 422
-        msg = await client.post(
-            f"/api/v1/threads/{tid}/messages", headers=h, json={"body": "still available?"}
-        )
+        msg = await client.post(f"/api/v1/threads/{tid}/messages", headers=h, json={"body": "still available?"})
         assert msg.status_code == 200
         listed = await client.get(f"/api/v1/threads/{tid}/messages", headers=h)
         assert listed.status_code == 200
@@ -70,8 +68,6 @@ async def test_client_forbidden_mail_status(settings) -> None:
                 "terms_version": "2026-08-22",
             },
         )
-        await client.post(
-            "/api/v1/auth/login", json={"email": "x@example.com", "password": PASSWORD}
-        )
+        await client.post("/api/v1/auth/login", json={"email": "x@example.com", "password": PASSWORD})
         res = await client.get("/api/v1/mail/status")
         assert res.status_code == 403

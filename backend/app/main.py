@@ -129,9 +129,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return JSONResponse(status_code=401, content={"code": "token_invalid"})
         async with request.app.state.session_factory() as session:
             try:
-                user, _claims = await authenticate_access(
-                    session, settings, request.app.state.kv, token
-                )
+                user, _claims = await authenticate_access(session, settings, request.app.state.kv, token)
             except AppError as exc:
                 return JSONResponse(status_code=exc.status_code, content={"code": exc.code})
         if user.status != "active" and user.role != "admin":

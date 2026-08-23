@@ -60,9 +60,7 @@ async def register(
         user_agent=_ua(request),
     )
     if verify_token:
-        request.app.state.mail_outbox.append(
-            {"to": user.email, "typ": "verify_email", "token": verify_token}
-        )
+        request.app.state.mail_outbox.append({"to": user.email, "typ": "verify_email", "token": verify_token})
     user = await auth_service.load_user(session, user.id)
     assert user is not None
     return auth_service.user_out(user, settings)
@@ -156,9 +154,7 @@ async def forgot(
 ) -> dict[str, bool]:
     token = await auth_service.issue_reset_token(session, settings, kv, str(payload.email))
     if token:
-        request.app.state.mail_outbox.append(
-            {"to": str(payload.email).lower(), "typ": "reset", "token": token}
-        )
+        request.app.state.mail_outbox.append({"to": str(payload.email).lower(), "typ": "reset", "token": token})
     return {"ok": True}
 
 

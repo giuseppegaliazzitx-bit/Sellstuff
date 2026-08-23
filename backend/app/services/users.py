@@ -43,11 +43,7 @@ async def get_client(session: AsyncSession, user_id: str) -> User:
 
 async def _revoke_all(session: AsyncSession, user_id: str) -> None:
     now = _now()
-    rows = (
-        (await session.execute(select(RefreshToken).where(RefreshToken.user_id == user_id)))
-        .scalars()
-        .all()
-    )
+    rows = (await session.execute(select(RefreshToken).where(RefreshToken.user_id == user_id))).scalars().all()
     for row in rows:
         if row.revoked_at is None:
             row.revoked_at = now

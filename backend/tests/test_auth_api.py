@@ -70,9 +70,7 @@ async def test_pending_cannot_list_deals(app_client) -> None:
     """P1-T4."""
     _app, client = app_client
     await client.post("/api/v1/auth/register", json=_register_body())
-    login = await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    login = await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     assert login.status_code == 200
     res = await client.get("/api/v1/deals")
     assert res.status_code == 403
@@ -82,9 +80,7 @@ async def test_login_bad_password_same_as_unknown(app_client) -> None:
     """P1-T5."""
     _app, client = app_client
     await client.post("/api/v1/auth/register", json=_register_body())
-    bad = await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": "nope-nope-nope"}
-    )
+    bad = await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": "nope-nope-nope"})
     unknown = await client.post(
         "/api/v1/auth/login", json={"email": "nobody@example.com", "password": "nope-nope-nope"}
     )
@@ -97,9 +93,7 @@ async def test_refresh_rotation_and_reuse(app_client) -> None:
     """P1-T6, P1-T18."""
     _app, client = app_client
     await client.post("/api/v1/auth/register", json=_register_body())
-    await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     old_refresh = client.cookies.get("refresh")
     first = await client.post("/api/v1/auth/refresh", headers=_csrf(client))
     assert first.status_code == 200, first.text
@@ -125,9 +119,7 @@ async def test_logout_kills_refresh_family(app_client) -> None:
     """P1-T7."""
     _app, client = app_client
     await client.post("/api/v1/auth/register", json=_register_body())
-    await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     res = await client.post("/api/v1/auth/logout", headers=_csrf(client))
     assert res.status_code == 200
     refresh = await client.post("/api/v1/auth/refresh", headers=_csrf(client))
@@ -145,9 +137,7 @@ async def test_login_sets_httponly_access_cookie(app_client) -> None:
     """P1-T15."""
     _app, client = app_client
     await client.post("/api/v1/auth/register", json=_register_body())
-    res = await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    res = await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     assert res.status_code == 200
     raw = ", ".join(res.headers.get_list("set-cookie"))
     assert "access=" in raw
@@ -159,9 +149,7 @@ async def test_access_jwt_claims(app_client, settings) -> None:
     """P1-T16."""
     _app, client = app_client
     await client.post("/api/v1/auth/register", json=_register_body())
-    await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     token = client.cookies.get("access")
     claims = decode_jwt(settings, token, expected_typ="access")
     for key in ("sub", "sid", "jti", "typ", "role", "status", "ver", "iss", "aud"):
@@ -174,9 +162,7 @@ async def test_tampered_and_wrong_typ(app_client, settings) -> None:
     """P1-T17."""
     _app, client = app_client
     await client.post("/api/v1/auth/register", json=_register_body())
-    await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     access = client.cookies.get("access")
     tampered = access[:-4] + ("AAAA" if not access.endswith("AAAA") else "BBBB")
     bad = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {tampered}"})
@@ -196,16 +182,12 @@ async def test_tampered_and_wrong_typ(app_client, settings) -> None:
         key=None,
         algorithm="none",
     )
-    none_res = await client.get(
-        "/api/v1/auth/me", headers={"Authorization": f"Bearer {none_token}"}
-    )
+    none_res = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {none_token}"})
     assert none_res.status_code == 401
 
     user_id = (await client.get("/api/v1/auth/me")).json()["id"]
     reset = encode_jwt(settings, sub=user_id, typ="reset", ttl=timedelta(minutes=30))
-    reset_as_access = await client.get(
-        "/api/v1/auth/me", headers={"Authorization": f"Bearer {reset}"}
-    )
+    reset_as_access = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {reset}"})
     assert reset_as_access.status_code == 401
 
 
@@ -243,9 +225,7 @@ async def test_register_requires_terms_version(app_client, settings) -> None:
     assert ok.json()["terms_accepted"] is True
     # bump terms
     settings.terms_version = "2026-09-01"
-    await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     app_me = await client.get("/api/v1/auth/me")
     assert app_me.status_code == 200
     assert app_me.json()["terms_accepted"] is False
@@ -266,9 +246,7 @@ async def admin_app(settings):
 
 
 async def _admin_bearer(client: AsyncClient) -> str:
-    res = await client.post(
-        "/api/v1/auth/login", json={"email": "admin@example.com", "password": ADMIN_PASSWORD}
-    )
+    res = await client.post("/api/v1/auth/login", json={"email": "admin@example.com", "password": ADMIN_PASSWORD})
     assert res.status_code == 200, res.text
     return client.cookies.get("access")
 
@@ -278,9 +256,7 @@ async def test_non_admin_cannot_approve(admin_app) -> None:
     _s, _app, client = admin_app
     await client.post("/api/v1/auth/register", json=_register_body())
     buyer_id = (
-        await client.post(
-            "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-        )
+        await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     ).json()["id"]
     access = client.cookies.get("access")
     res = await client.post(
@@ -295,9 +271,7 @@ async def test_admin_approve_and_deals(admin_app) -> None:
     """P1-T9, P1-T20."""
     _s, app, client = admin_app
     await client.post("/api/v1/auth/register", json=_register_body())
-    await client.post(
-        "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
     buyer_access = client.cookies.get("access")
     buyer_id = (await client.get("/api/v1/auth/me")).json()["id"]
 
@@ -320,9 +294,7 @@ async def test_admin_approve_and_deals(admin_app) -> None:
     # but we overwrote cookies with admin login. Use a second client.
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as buyer:
-        await buyer.post(
-            "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-        )
+        await buyer.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
         refreshed = await buyer.post("/api/v1/auth/refresh", headers=_csrf(buyer))
         assert refreshed.status_code == 200
         assert refreshed.json()["status"] == "active"
@@ -335,9 +307,7 @@ async def test_suspend_stales_access(admin_app) -> None:
     """P1-T19."""
     _s, _app, client = admin_app
     await client.post("/api/v1/auth/register", json=_register_body(email="keep@example.com"))
-    await client.post(
-        "/api/v1/auth/login", json={"email": "keep@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "keep@example.com", "password": PASSWORD})
     buyer_access = client.cookies.get("access")
     buyer_id = (await client.get("/api/v1/auth/me")).json()["id"]
     admin_token = await _admin_bearer(client)
@@ -348,9 +318,7 @@ async def test_suspend_stales_access(admin_app) -> None:
         json={},
     )
     # login again as buyer to get a post-approve access token
-    await client.post(
-        "/api/v1/auth/login", json={"email": "keep@example.com", "password": PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "keep@example.com", "password": PASSWORD})
     live_access = client.cookies.get("access")
     buyer_id = (await client.get("/api/v1/auth/me")).json()["id"]
     admin_token = await _admin_bearer(client)
@@ -369,16 +337,12 @@ async def test_suspend_stales_access(admin_app) -> None:
 async def test_csrf_required_cookie_post_bearer_ok(admin_app) -> None:
     """P1-T21."""
     _s, _app, client = admin_app
-    await client.post(
-        "/api/v1/auth/login", json={"email": "admin@example.com", "password": ADMIN_PASSWORD}
-    )
+    await client.post("/api/v1/auth/login", json={"email": "admin@example.com", "password": ADMIN_PASSWORD})
     no_csrf = await client.post("/api/v1/auth/logout")
     assert no_csrf.status_code == 403
     assert no_csrf.json()["code"] == "csrf_failed"
     access = client.cookies.get("access")
-    with_bearer = await client.post(
-        "/api/v1/auth/logout", headers={"Authorization": f"Bearer {access}"}
-    )
+    with_bearer = await client.post("/api/v1/auth/logout", headers={"Authorization": f"Bearer {access}"})
     assert with_bearer.status_code == 200
 
 
@@ -391,12 +355,8 @@ async def test_two_sessions_revoke_one(admin_app) -> None:
         AsyncClient(transport=transport, base_url="http://test") as a,
         AsyncClient(transport=transport, base_url="http://test") as b,
     ):
-        await a.post(
-            "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-        )
-        await b.post(
-            "/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD}
-        )
+        await a.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
+        await b.post("/api/v1/auth/login", json={"email": "buyer@example.com", "password": PASSWORD})
         sessions = await a.get("/api/v1/auth/sessions")
         assert sessions.status_code == 200
         rows = sessions.json()
@@ -427,9 +387,7 @@ async def test_verify_email_gate(settings) -> None:
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         await client.post("/api/v1/auth/register", json=_register_body())
         admin = await _admin_bearer(client)
-        buyers = await client.get(
-            "/api/v1/admin/buyers", headers={"Authorization": f"Bearer {admin}"}
-        )
+        buyers = await client.get("/api/v1/admin/buyers", headers={"Authorization": f"Bearer {admin}"})
         row = next(b for b in buyers.json() if b["email"] == "buyer@example.com")
         assert row["email_verified"] is False
         ok = await client.post(
@@ -454,9 +412,7 @@ async def test_verify_email_gate(settings) -> None:
         await client.post("/api/v1/auth/register", json=_register_body(email="gated@example.com"))
         token = next(m["token"] for m in app2.state.mail_outbox if m["typ"] == "verify_email")
         admin = await _admin_bearer(client)
-        buyers = await client.get(
-            "/api/v1/admin/buyers", headers={"Authorization": f"Bearer {admin}"}
-        )
+        buyers = await client.get("/api/v1/admin/buyers", headers={"Authorization": f"Bearer {admin}"})
         row = next(b for b in buyers.json() if b["email"] == "gated@example.com")
         refused = await client.post(
             f"/api/v1/admin/buyers/{row['id']}/approve",
@@ -485,13 +441,9 @@ async def test_password_reset_bumps_ver(app_client) -> None:
     await client.post("/api/v1/auth/forgot", json={"email": "buyer@example.com"})
     tokens = [m["token"] for m in app.state.mail_outbox if m["typ"] == "reset"]
     assert len(tokens) == 2
-    first = await client.post(
-        "/api/v1/auth/reset", json={"token": tokens[0], "password": "new-correct-horse"}
-    )
+    first = await client.post("/api/v1/auth/reset", json={"token": tokens[0], "password": "new-correct-horse"})
     assert first.status_code == 200
-    second = await client.post(
-        "/api/v1/auth/reset", json={"token": tokens[1], "password": "other-correct-horse"}
-    )
+    second = await client.post("/api/v1/auth/reset", json={"token": tokens[1], "password": "other-correct-horse"})
     assert second.status_code == 401
     login = await client.post(
         "/api/v1/auth/login", json={"email": "buyer@example.com", "password": "new-correct-horse"}

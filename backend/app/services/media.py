@@ -32,9 +32,7 @@ def reject_polyglot(data: bytes) -> None:
             raise AppError(422, "unsupported_media", "File content does not match an image")
 
 
-def process_photo(
-    storage: LocalStorage, deal_id: str, photo_id: str, data: bytes
-) -> dict[str, str]:
+def process_photo(storage: LocalStorage, deal_id: str, photo_id: str, data: bytes) -> dict[str, str]:
     reject_polyglot(data)
     ctype = sniff_image(data)
     try:

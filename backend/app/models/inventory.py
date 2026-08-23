@@ -56,19 +56,11 @@ class Deal(Base):
     investor_highlights: Mapped[list] = mapped_column(JSON, default=list)
     video_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     offers_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    early_access_until: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    early_access_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deal_structure: Mapped[str] = mapped_column(String(32), default="assignment")
-    contract_executed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    option_period_ends_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    contract_close_by: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    contract_executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    option_period_ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    contract_close_by: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     lockbox_code: Mapped[str] = mapped_column(String(40), default="")
     jv_partner_name: Mapped[str] = mapped_column(String(120), default="")
     jv_partner_phone: Mapped[str] = mapped_column(String(40), default="")
@@ -76,17 +68,13 @@ class Deal(Base):
     jv_fee_split_pct: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cover_photo_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_by: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=True
-    )
+    created_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     market: Mapped[Market] = relationship(back_populates="deals")
-    photos: Mapped[list[DealPhoto]] = relationship(
-        back_populates="deal", order_by="DealPhoto.sort_order"
-    )
+    photos: Mapped[list[DealPhoto]] = relationship(back_populates="deal", order_by="DealPhoto.sort_order")
     documents: Mapped[list[DealDocument]] = relationship(back_populates="deal")
     status_history: Mapped[list[DealStatusHistory]] = relationship(back_populates="deal")
     price_history: Mapped[list[DealPriceHistory]] = relationship(back_populates="deal")
