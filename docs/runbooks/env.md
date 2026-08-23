@@ -1,6 +1,7 @@
 # Environment variables
 
 Every knob lives in `.env`. `.env.example` is the committed catalog.
+**What each variable is for:** [env-variables.md](env-variables.md).
 CI fails if a `Settings` field is added without a matching `.env.example` key (P0-T13).
 
 ## Local-first defaults

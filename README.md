@@ -47,6 +47,8 @@ python scripts/run_dev.py
 
 Change `PUBLIC_BRAND_NAME` in `.env`, restart the API, refresh the browser. No frontend rebuild.
 
+What each env var does: [docs/runbooks/env-variables.md](docs/runbooks/env-variables.md).
+
 ### Demo accounts (Phase 1)
 
 Set in `.env` (12+ character password, not a common word):
