@@ -110,4 +110,5 @@ jobs:
             echo "forbidden symbol present"
             exit 1
           fi
+          python scripts/denylist_grep.py
           echo "denylist clean"

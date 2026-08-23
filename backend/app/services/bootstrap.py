@@ -12,6 +12,34 @@ from app.models import User, new_id
 from app.services.seed import seed_product
 
 
+def create_admin(settings: Settings, *, email: str, password: str, name: str = "Admin") -> bool:
+    engine = create_engine(to_sync_url(settings.database_url))
+    try:
+        with Session(engine) as session:
+            existing = session.scalar(select(User).where(User.email == email.strip().lower()))
+            if existing:
+                return False
+            now = datetime.now(UTC)
+            session.add(
+                User(
+                    id=new_id(),
+                    email=email.strip().lower(),
+                    password_hash=hash_password(password),
+                    role="admin",
+                    status="active",
+                    name=name,
+                    token_version=1,
+                    created_at=now,
+                    approved_at=now,
+                    email_verified_at=now,
+                )
+            )
+            session.commit()
+            return True
+    finally:
+        engine.dispose()
+
+
 def seed_admin(settings: Settings) -> None:
     email = (settings.bootstrap_admin_email or "").strip().lower()
     password = settings.bootstrap_admin_password

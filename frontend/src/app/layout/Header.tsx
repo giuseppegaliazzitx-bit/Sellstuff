@@ -26,7 +26,34 @@ export function Header() {
             <span className="font-semibold tracking-wide text-gold">{cfg.brand_name}</span>
           )}
         </Link>
-        <nav className="flex items-center gap-6 text-sm">
+        {user ? (
+          <details className="relative md:hidden">
+            <summary className="cursor-pointer list-none text-sm text-neutral-200">Menu</summary>
+            <div className="absolute right-0 z-20 mt-2 flex w-44 flex-col gap-2 rounded border border-neutral-700 bg-header p-3 text-sm shadow">
+              {user.status === "active" ? <Link to="/app/browse">Browse</Link> : null}
+              {user.role === "admin" ? (
+                <>
+                  <Link to="/admin/deals">Inventory</Link>
+                  <Link to="/admin/buyers">Buyers</Link>
+                  <Link to="/admin/offers">Offers</Link>
+                  <Link to="/admin/blasts">Blasts</Link>
+                  <Link to="/admin/metrics">Metrics</Link>
+                  <Link to="/admin/mail">Mail</Link>
+                </>
+              ) : null}
+              {user.status === "active" ? (
+                <>
+                  <Link to="/app/saved">Saved</Link>
+                  <Link to="/app/offers">Offers</Link>
+                  <Link to="/app/chat">Chat</Link>
+                  <Link to="/app/notifications">Notifications</Link>
+                  <Link to="/app/settings">Settings</Link>
+                </>
+              ) : null}
+            </div>
+          </details>
+        ) : null}
+        <nav className="flex items-center gap-4 text-sm md:gap-6">
           {user && user.status === "active" ? (
             <Link to="/app/browse" className="text-neutral-200 hover:text-white">
               Browse

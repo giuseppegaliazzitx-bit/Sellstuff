@@ -14,6 +14,7 @@ interface BlastRow {
 export function BlastsPage() {
   const [rows, setRows] = useState<BlastRow[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  const [estimate, setEstimate] = useState<string | null>(null);
 
   async function load() {
     setRows(await apiJson<BlastRow[]>("/api/v1/admin/blasts"));
@@ -35,6 +36,12 @@ export function BlastsPage() {
         onSubmit={async (e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
+          const segment = {
+            tier: String(fd.get("tier") || "") || undefined,
+            tag: String(fd.get("tag") || "") || undefined,
+            market: String(fd.get("market") || "") || undefined,
+            max_price: fd.get("max") ? Math.round(Number(fd.get("max")) * 100) : undefined,
+          };
           try {
             const created = await apiJson<{ id: string; total: number; estimated_finish_at: string | null }>(
               "/api/v1/admin/blasts",
@@ -43,6 +50,8 @@ export function BlastsPage() {
                 body: JSON.stringify({
                   subject: String(fd.get("subject")),
                   body: String(fd.get("body")),
+                  deal_id: String(fd.get("deal_id") || "") || null,
+                  segment,
                 }),
               },
             );
@@ -55,6 +64,29 @@ export function BlastsPage() {
       >
         <input name="subject" required placeholder="Subject" className="rounded border px-2 py-1" />
         <textarea name="body" required placeholder="Body" className="rounded border px-2 py-1" rows={4} />
+        <input name="deal_id" placeholder="Deal id (optional)" className="rounded border px-2 py-1" />
+        <div className="grid grid-cols-2 gap-2">
+          <select name="tier" className="rounded border px-2 py-1">
+            <option value="">All tiers</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+          </select>
+          <input name="tag" placeholder="Tag" className="rounded border px-2 py-1" />
+          <input name="market" placeholder="Market" className="rounded border px-2 py-1" />
+          <input name="max" type="number" placeholder="Max buy box $" className="rounded border px-2 py-1" />
+        </div>
+        <button
+          type="button"
+          className="text-left text-xs text-gold"
+          onClick={async () => {
+            const est = await apiJson<{ estimated_finish_at: string }>("/api/v1/admin/blasts/estimate?n=1400");
+            setEstimate(`1,400 recipients would finish ${est.estimated_finish_at}`);
+          }}
+        >
+          Cap estimate for 1,400
+        </button>
+        {estimate ? <p className="text-xs text-neutral-500">{estimate}</p> : null}
         <button type="submit" className="rounded bg-gold px-3 py-1 font-semibold text-white">
           Create draft
         </button>
@@ -63,7 +95,7 @@ export function BlastsPage() {
         {rows.map((r) => (
           <li key={r.id} className="flex items-center justify-between rounded border bg-white p-3">
             <span>
-              {r.subject} · {r.status} · {r.sent}/{r.total}
+              {r.subject} · {r.status} · {r.sent}/{r.total} · {r.clicked} clicks
               {r.estimated_finish_at ? ` · until ${r.estimated_finish_at}` : ""}
             </span>
             <span className="flex gap-2">
@@ -89,6 +121,20 @@ export function BlastsPage() {
                 }}
               >
                 Pause
+              </button>
+              <button
+                type="button"
+                className="text-gold"
+                onClick={async () => {
+                  try {
+                    await apiJson(`/api/v1/admin/blasts/${r.id}/resume`, { method: "POST", body: "{}" });
+                    await load();
+                  } catch (err) {
+                    setMsg(err instanceof Error ? err.message : "Resume failed");
+                  }
+                }}
+              >
+                Resume
               </button>
             </span>
           </li>

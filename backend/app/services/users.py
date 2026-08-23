@@ -16,6 +16,10 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+def phone_digits(raw: str) -> str:
+    return "".join(ch for ch in (raw or "") if ch.isdigit())[-10:]
+
+
 async def list_buyers(session: AsyncSession, status: str | None = None) -> list[User]:
     stmt = (
         select(User)

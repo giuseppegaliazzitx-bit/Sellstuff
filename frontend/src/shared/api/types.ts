@@ -43,6 +43,8 @@ export interface BuyerRow {
   tier?: string;
   tags?: string[];
   do_not_contact?: boolean;
+  funds_verified?: boolean;
+  duplicate_hint?: string | null;
 }
 
 export interface SessionRow {

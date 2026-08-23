@@ -54,6 +54,7 @@ export function BuyerDetailPage() {
             body: JSON.stringify({
               tier: String(fd.get("tier")),
               do_not_contact: Boolean(fd.get("dnc")),
+              funds_verified: Boolean(fd.get("pof")),
             }),
           });
           await load();
@@ -66,6 +67,9 @@ export function BuyerDetailPage() {
         </select>
         <label className="flex items-center gap-1">
           <input type="checkbox" name="dnc" defaultChecked={buyer.do_not_contact} /> DNC
+        </label>
+        <label className="flex items-center gap-1">
+          <input type="checkbox" name="pof" defaultChecked={buyer.funds_verified} /> POF
         </label>
         <button type="submit" className="rounded bg-gold px-3 py-1 text-white">
           Save

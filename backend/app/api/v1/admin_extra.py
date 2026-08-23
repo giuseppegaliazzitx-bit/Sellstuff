@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import PlainTextResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,6 +38,31 @@ async def import_commit(
     rows = payload.get("rows") or []
     n = await commit_import(session, rows)
     return {"imported": n}
+
+
+@router.get("/admin/users/export")
+async def export_buyers(
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> PlainTextResponse:
+    rows = await list_buyers(session, None)
+    lines = ["email,name,phone,status,tier,lead_source,company"]
+    for u in rows:
+        p = u.profile
+        lines.append(
+            ",".join(
+                [
+                    u.email,
+                    (u.name or "").replace(",", " "),
+                    u.phone_raw.replace(",", " "),
+                    u.status,
+                    p.tier if p else "C",
+                    (p.lead_source if p else "") or "",
+                    (p.company if p else "") or "",
+                ]
+            )
+        )
+    return PlainTextResponse("\n".join(lines) + "\n", media_type="text/csv")
 
 
 @router.get("/admin/users")
@@ -163,6 +189,20 @@ async def blast_pause(
     camp.status = "paused"
     await session.commit()
     return {"id": camp.id, "status": camp.status}
+
+
+@router.post("/admin/blasts/{cid}/resume")
+async def blast_resume(
+    cid: str,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings_dep),
+) -> dict:
+    camp = (await session.execute(select(BlastCampaign).where(BlastCampaign.id == cid))).scalar_one_or_none()
+    if camp is None:
+        raise AppError(404, "not_found", "Campaign not found")
+    camp = await send_campaign(session, settings, camp)
+    return {"id": camp.id, "status": camp.status, "sent": camp.sent, "total": camp.total}
 
 
 @router.get("/admin/blasts/estimate")

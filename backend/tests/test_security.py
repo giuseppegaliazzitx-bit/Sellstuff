@@ -77,3 +77,17 @@ def test_previous_key_verifies_but_does_not_sign(monkeypatch: pytest.MonkeyPatch
     prev_only = rotated.model_copy(update={"secret_key": SECRET, "secret_key_previous": ""})
     with pytest.raises(TokenError):
         decode_jwt(prev_only, new_token, expected_typ="access")
+
+
+def test_blanking_previous_rejects_old_tokens(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SECRET_KEY", OTHER)
+    monkeypatch.setenv("SECRET_KEY_PREVIOUS", SECRET)
+    monkeypatch.setenv("JWT_ISSUER", "localhost")
+    rotated = Settings(_env_file=None)  # type: ignore[call-arg]
+    old = rotated.model_copy(update={"secret_key": SECRET, "secret_key_previous": ""})
+    old_token = encode_jwt(old, sub="user-1", typ="access", ttl=timedelta(minutes=15))
+    decode_jwt(rotated, old_token, expected_typ="access")
+    blanked = rotated.model_copy(update={"secret_key_previous": ""})
+    with pytest.raises(TokenError) as exc:
+        decode_jwt(blanked, old_token, expected_typ="access")
+    assert exc.value.code == "token_invalid"

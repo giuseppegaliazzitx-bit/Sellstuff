@@ -11,8 +11,9 @@ from app.core.deps import get_db, require_active, require_admin, require_user
 from app.core.errors import AppError
 from app.core.security import TokenError, decode_jwt
 from app.models import (
+    BlastCampaign,
+    BlastRecipient,
     ContactEvent,
-    Deal,
     DealAcknowledgment,
     EmailLink,
     Event,
@@ -681,25 +682,20 @@ async def metrics(
     _admin: User = Depends(require_admin),
     session: AsyncSession = Depends(get_db),
 ) -> dict:
-    deals = (await session.execute(select(Deal).where(Deal.deleted_at.is_(None)))).scalars().all()
-    by_status: dict[str, int] = {}
-    clock = []
-    now = _now()
-    for d in deals:
-        by_status[d.status] = by_status.get(d.status, 0) + 1
-        if d.contract_close_by:
-            close = d.contract_close_by if d.contract_close_by.tzinfo else d.contract_close_by.replace(tzinfo=UTC)
-            days = int((close - now).total_seconds() // 86400)
-            clock.append(
-                {
-                    "id": d.id,
-                    "address1": d.address1,
-                    "days_left": days,
-                    "urgent": days < 7,
-                }
-            )
-    clock.sort(key=lambda r: r["days_left"])
-    return {"counts": by_status, "contract_board": clock, "deals": len(deals)}
+    from app.services.metrics import overview
+
+    return await overview(session)
+
+
+@router.post("/admin/jobs/nightly")
+async def nightly_jobs(
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    from app.services.metrics import notify_contract_clock
+
+    n = await notify_contract_clock(session)
+    return {"contract_expiring": n}
 
 
 @router.get("/t/{token}")
@@ -709,11 +705,26 @@ async def track_click(token: str, request: Request, session: AsyncSession = Depe
         claims = decode_jwt(settings, token, expected_typ="track")
     except TokenError:
         return RedirectResponse("/app/browse")
+    camp_id = str(claims.get("campaign") or "")
+    user_id = str(claims.get("sub") or "")
+    if camp_id and user_id:
+        recip = (
+            await session.execute(
+                select(BlastRecipient).where(BlastRecipient.campaign_id == camp_id, BlastRecipient.user_id == user_id)
+            )
+        ).scalar_one_or_none()
+        if recip and recip.clicked_at is None:
+            recip.clicked_at = _now()
+            camp = (
+                await session.execute(select(BlastCampaign).where(BlastCampaign.id == camp_id))
+            ).scalar_one_or_none()
+            if camp:
+                camp.clicked += 1
     session.add(
         Outbox(
             id=new_id(),
             kind="blast.clicked",
-            payload={"sub": claims.get("sub"), "deal": claims.get("deal")},
+            payload={"sub": claims.get("sub"), "deal": claims.get("deal"), "campaign": camp_id},
             created_at=_now(),
         )
     )

@@ -43,6 +43,11 @@ async def eligible_buyers(session: AsyncSession, segment: dict) -> list[User]:
             continue
         if segment.get("max_price") and p.max_price_cents and p.max_price_cents < int(segment["max_price"]):
             continue
+        market = str(segment.get("market") or "").strip().lower()
+        if market:
+            names = [str(m).lower() for m in (p.markets or [])]
+            if market not in names:
+                continue
         out.append(u)
     return out
 

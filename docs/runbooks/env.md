@@ -21,6 +21,14 @@ CI fails if a `Settings` field is added without a matching `.env.example` key (P
 
 - `SECRET_KEY` — required, ≥ 32 bytes. Signs every JWT. Generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
 - `SECRET_KEY_PREVIOUS` — verify-only during rotation.
+
+### Rotate `SECRET_KEY`
+
+1. Generate a new 32+ byte key.
+2. Move the current `SECRET_KEY` into `SECRET_KEY_PREVIOUS`.
+3. Set `SECRET_KEY` to the new value and restart.
+4. New access tokens sign with the new key; old ones still verify via previous.
+5. After refresh tokens rotate (or you bump `token_version`), blank `SECRET_KEY_PREVIOUS` and restart. Old access tokens then 401.
 - `MAIL_PASSWORD` — 16-char Google App Password. Blank is fine until Phase 6.
 - `BOOTSTRAP_ADMIN_PASSWORD` — used in Phase 1 seed. Blank in Phase 0.
 

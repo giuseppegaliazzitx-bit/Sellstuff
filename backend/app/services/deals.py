@@ -271,6 +271,8 @@ async def patch_deal(
     data = payload.model_dump(exclude_unset=True)
     diffs: dict = {}
     notify = False
+    price_drop: tuple[int, int] | None = None
+    gone = False
     if "list_price_cents" in data and data["list_price_cents"] != deal.list_price_cents:
         old = deal.list_price_cents
         hist_row = DealPriceHistory(
@@ -284,6 +286,8 @@ async def patch_deal(
         session.add(hist_row)
         deal.price_history.append(hist_row)
         diffs["list_price_cents"] = [old, data["list_price_cents"]]
+        if data["list_price_cents"] < old:
+            price_drop = (old, data["list_price_cents"])
     if "status" in data and data["status"] != deal.status:
         assert_transition(deal.status, data["status"])
         session.add(
@@ -305,6 +309,8 @@ async def patch_deal(
                 if deal.early_access_until is None and hours > 0 and "early_access_until" not in data:
                     deal.early_access_until = now + timedelta(hours=hours)
             notify = True
+        if data["status"] in {"assigned", "closed"}:
+            gone = True
         diffs["status"] = [deal.status, data["status"]]
     if "lockbox_code" in data:
         session.add(
@@ -342,6 +348,16 @@ async def patch_deal(
 
         deal = await get_deal(session, deal_id)
         await notify_matches(session, deal)
+    if price_drop:
+        from app.services.match import notify_price_drop
+
+        deal = await get_deal(session, deal_id)
+        await notify_price_drop(session, deal, price_drop[0], price_drop[1])
+    if gone:
+        from app.services.match import notify_gone
+
+        deal = await get_deal(session, deal_id)
+        await notify_gone(session, deal)
     return await get_deal(session, deal_id)
 
 

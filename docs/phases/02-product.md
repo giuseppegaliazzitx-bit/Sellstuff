@@ -16,6 +16,10 @@ Shipped together on `phase/02-product` so the laptop has a working desk without 
 | 11 | CSP + nosniff headers; preview-as-client = DealPublic page; TOTP enroll/login; ADMIN_REQUIRE_2FA |
 | 12 | Compose files from Phase 0 still apply |
 | extra | IMAP ingest + unmatched queue, early-access window, landing page, video embed |
+| 9 leftovers | gone/similar alerts, price-drop alerts, blast segments + resume, track clicks |
+| 10 leftovers | funnel, 7d activity, blast stats, contact leaderboard, tier/lead-source |
+| 11 leftovers | Sentry hook, SECRET_KEY blank-previous test, denylist-grep script |
+| 12 leftovers | create-admin CLI, deploy/env runbooks (Compose still later) |
 
 ## Green-run
 

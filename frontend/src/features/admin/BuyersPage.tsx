@@ -48,6 +48,9 @@ export function BuyersPage() {
         <button type="submit" className="mt-2 rounded bg-gold px-3 py-1 text-white">
           Import
         </button>
+        <a href="/api/v1/admin/users/export" className="ml-3 text-xs text-gold">
+          Export CSV
+        </a>
       </form>
       <div className="mt-4 flex gap-2 text-sm">
         {["pending", "active", "rejected", "suspended", ""].map((s) => (
@@ -83,7 +86,12 @@ export function BuyersPage() {
                   </a>
                 </td>
                 <td className="px-3 py-2">{row.email}</td>
-                <td className="px-3 py-2">{row.status}</td>
+                <td className="px-3 py-2">
+                  {row.status}
+                  {row.duplicate_hint ? (
+                    <span className="mt-1 block text-xs text-red-700">{row.duplicate_hint}</span>
+                  ) : null}
+                </td>
                 <td className="px-3 py-2">{row.email_verified ? "yes" : "unverified"}</td>
                 <td className="px-3 py-2">{row.lead_source}</td>
                 <td className="px-3 py-2 text-right">

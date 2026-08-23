@@ -80,6 +80,8 @@ class BuyerOut(BaseModel):
     tier: str = "C"
     tags: list[str] = []
     do_not_contact: bool = False
+    funds_verified: bool = False
+    duplicate_hint: str | None = None
 
 
 class ApproveIn(BaseModel):
@@ -143,3 +145,4 @@ class BuyerPatch(BaseModel):
     tags: list[str] | None = None
     do_not_contact: bool | None = None
     company: str | None = None
+    funds_verified: bool | None = None

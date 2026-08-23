@@ -77,7 +77,7 @@ cp .env.example .env   # fill SECRET_KEY
 docker compose up --build
 ```
 
-Prod overlay (brother, Phase 12) pulls tagged images from GHCR — see `docs/runbooks/deploy.md`.
+Prod overlay (brother, Phase 12) pulls tagged images from GHCR — see `docs/runbooks/deploy.md`. Extra admin: `python -m app.cli create-admin --email … --password …` from `backend/`.
 
 ## Layout
 

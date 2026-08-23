@@ -6,7 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models import Deal, Market, Notification, Outbox, User, new_id
+from app.models import Deal, Interest, Market, Notification, Outbox, SavedDeal, User, new_id
+from app.services.status import CLIENT_VISIBLE
 
 
 def buy_box_matches(deal: Deal, user: User) -> bool:
@@ -86,6 +87,105 @@ async def notify_matches(session: AsyncSession, deal: Deal) -> int:
                 id=new_id(),
                 kind="alert.deal",
                 payload={"user_id": user.id, "deal_id": deal.id},
+                created_at=now,
+            )
+        )
+        count += 1
+    await session.commit()
+    return count
+
+
+def pick_similar(deal: Deal, others: list[Deal], n: int = 3) -> list[Deal]:
+    lo = int(deal.list_price_cents * 0.75)
+    hi = int(deal.list_price_cents * 1.25)
+    out: list[Deal] = []
+    for other in others:
+        if other.id == deal.id or other.deleted_at is not None:
+            continue
+        if other.status not in CLIENT_VISIBLE:
+            continue
+        if other.market_id != deal.market_id:
+            continue
+        if other.property_type != deal.property_type:
+            continue
+        if other.list_price_cents < lo or other.list_price_cents > hi:
+            continue
+        out.append(other)
+        if len(out) >= n:
+            break
+    return out
+
+
+async def notify_price_drop(session: AsyncSession, deal: Deal, old_cents: int, new_cents: int) -> int:
+    if new_cents >= old_cents:
+        return 0
+    ids = (await session.execute(select(SavedDeal.user_id).where(SavedDeal.deal_id == deal.id))).scalars().all()
+    now = datetime.now(UTC)
+    count = 0
+    for uid in ids:
+        session.add(
+            Notification(
+                id=new_id(),
+                user_id=uid,
+                type="deal.price_drop",
+                payload={"deal_id": deal.id, "old_cents": old_cents, "new_cents": new_cents},
+                created_at=now,
+            )
+        )
+        session.add(
+            Outbox(
+                id=new_id(),
+                kind="alert.price_drop",
+                payload={"user_id": uid, "deal_id": deal.id},
+                created_at=now,
+            )
+        )
+        count += 1
+    await session.commit()
+    return count
+
+
+async def notify_gone(session: AsyncSession, deal: Deal) -> int:
+    others = list(
+        (
+            await session.execute(
+                select(Deal).where(
+                    Deal.deleted_at.is_(None),
+                    Deal.status.in_(CLIENT_VISIBLE),
+                    Deal.market_id == deal.market_id,
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    similar = [
+        {"id": d.id, "address1": d.address1, "list_price_cents": d.list_price_cents}
+        for d in pick_similar(deal, others)
+    ]
+    interested = set(
+        (await session.execute(select(Interest.user_id).where(Interest.deal_id == deal.id))).scalars().all()
+    )
+    watching = set(
+        (await session.execute(select(SavedDeal.user_id).where(SavedDeal.deal_id == deal.id))).scalars().all()
+    )
+    now = datetime.now(UTC)
+    count = 0
+    for uid in interested | watching:
+        session.add(
+            Notification(
+                id=new_id(),
+                user_id=uid,
+                type="deal.gone",
+                payload={"deal_id": deal.id, "address": deal.address1, "similar": similar},
+                created_at=now,
+            )
+        )
+        session.add(
+            Outbox(
+                id=new_id(),
+                kind="alert.gone",
+                payload={"user_id": uid, "deal_id": deal.id, "similar": similar},
                 created_at=now,
             )
         )

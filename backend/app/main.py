@@ -46,6 +46,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     resolved = settings or get_settings()
+    if resolved.sentry_dsn:
+        try:
+            import sentry_sdk
+
+            sentry_sdk.init(dsn=resolved.sentry_dsn, environment=resolved.environment, send_default_pii=False)
+        except ImportError:
+            pass
     app = FastAPI(
         title=resolved.public_brand_name,
         version=resolved.app_version,
