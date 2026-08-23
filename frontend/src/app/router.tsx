@@ -4,6 +4,7 @@ import { GuestOnly, PendingOnly, RequireActive, RequireAdmin } from "./guards";
 import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
 import { ForgotPage } from "../features/auth/ForgotPage";
+import { ResetPage } from "../features/auth/ResetPage";
 import { WaitingRoom } from "../features/auth/WaitingRoom";
 import { BrowsePage } from "../features/browse/BrowsePage";
 import { DealPage } from "../features/deal/DealPage";
@@ -12,6 +13,7 @@ import { AdminDealsPage } from "../features/admin/DealsPage";
 import { MetricsPage } from "../features/admin/MetricsPage";
 import { BlastsPage } from "../features/admin/BlastsPage";
 import { PipelinePage } from "../features/admin/PipelinePage";
+import { MailboxPage } from "../features/admin/MailboxPage";
 import { DealEditorPage } from "../features/admin/DealEditorPage";
 import { BuyerDetailPage } from "../features/admin/BuyerDetailPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
@@ -36,6 +38,7 @@ export const router = createBrowserRouter([
           { path: "login", element: <LoginPage /> },
           { path: "register", element: <RegisterPage /> },
           { path: "forgot", element: <ForgotPage /> },
+          { path: "reset", element: <ResetPage /> },
         ],
       },
       {
@@ -64,6 +67,7 @@ export const router = createBrowserRouter([
           { path: "admin/metrics", element: <MetricsPage /> },
           { path: "admin/blasts", element: <BlastsPage /> },
           { path: "admin/offers", element: <PipelinePage /> },
+          { path: "admin/mail", element: <MailboxPage /> },
         ],
       },
     ],

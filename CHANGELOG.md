@@ -13,3 +13,4 @@ Versioning: `v0.NN.0` per phase; Phase 12 is `v1.0.0`.
 - Phases 2–10 product: inventory (DealPublic vs DealAdmin), OSM browse, deal detail, chat, sandbox mail, offers/showings, CRM notes, metrics/contract clock. Docker files remain for Phase 12.
 - Buyer CSV import + claim-on-register, buy-box matching on publish, sandbox blasts with send cap estimate, Nominatim geocode (mockable), admin photo/status/geocode, offer pipeline, watchlist.
 - Settings (profile, buy box, sessions), watchlist + my offers + notifications, legal pages, deal lightbox/docs/RSVP/email, admin deal editor and buyer CRM notes.
+- Password reset (local sandbox link), map pin → deal, mini-map, showing windows, offer counter/backup, mailbox status, PDF watermark hook, IMAP matcher.

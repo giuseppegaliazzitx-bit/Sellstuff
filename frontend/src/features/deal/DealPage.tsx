@@ -5,6 +5,7 @@ import { formatUsd } from "../../shared/money";
 import { useConfig } from "../../shared/config";
 import { useAuth } from "../../shared/auth";
 import type { DealPublic } from "../../shared/api/types";
+import { BrowseMap } from "../browse/BrowseMap";
 
 export function DealPage() {
   const { id } = useParams();
@@ -225,6 +226,25 @@ export function DealPage() {
           </details>
         ))}
       </div>
+      {deal.lat != null && deal.lng != null ? (
+        <div className="mt-8 h-56 overflow-hidden rounded border">
+          <BrowseMap
+            pins={[
+              {
+                id: deal.id,
+                lat: deal.lat,
+                lng: deal.lng,
+                list_price_cents: deal.list_price_cents,
+                price_label: formatUsd(deal.list_price_cents),
+                status: deal.status,
+                reduced: Boolean(deal.reduced_cents),
+                offers_due_at: deal.offers_due_at,
+              },
+            ]}
+            satellite={false}
+          />
+        </div>
+      ) : null}
       {user?.role === "admin" ? (
         <p className="mt-8 text-xs text-neutral-400">
           Preview as client is this page — rehab never appears here.

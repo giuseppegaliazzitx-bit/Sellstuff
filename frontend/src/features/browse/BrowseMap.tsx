@@ -6,7 +6,15 @@ const OSM = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ESRI =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
-export function BrowseMap({ pins, satellite }: { pins: MapPin[]; satellite: boolean }) {
+export function BrowseMap({
+  pins,
+  satellite,
+  onSelect,
+}: {
+  pins: MapPin[];
+  satellite: boolean;
+  onSelect?: (id: string) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const layerRef = useRef<any>(null);
@@ -47,12 +55,11 @@ export function BrowseMap({ pins, satellite }: { pins: MapPin[]; satellite: bool
     import("leaflet").then((mod) => {
       const L = mod.default ?? mod;
       pins.forEach((p) => {
-        L.marker([p.lat, p.lng])
-          .bindTooltip(p.price_label)
-          .addTo(map);
+        const m = L.marker([p.lat, p.lng]).bindTooltip(p.price_label).addTo(map);
+        if (onSelect) m.on("click", () => onSelect(p.id));
       });
     });
-  }, [pins]);
+  }, [pins, onSelect]);
 
   return <div ref={ref} className="h-full min-h-[20rem] w-full" data-testid="browse-map" />;
 }

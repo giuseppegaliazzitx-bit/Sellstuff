@@ -109,6 +109,36 @@ export function DealEditorPage() {
           <img key={src} src={src} alt="" className="h-28 w-full rounded object-cover" />
         ))}
       </div>
+      <form
+        className="mt-8 rounded border bg-white p-4 text-sm"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          const start = String(fd.get("start"));
+          const end = String(fd.get("end"));
+          await apiJson(`/api/v1/admin/deals/${deal.id}/showing-windows`, {
+            method: "POST",
+            body: JSON.stringify({
+              starts_at: new Date(start).toISOString(),
+              ends_at: new Date(end).toISOString(),
+              capacity: Number(fd.get("cap") || 6),
+              notes: String(fd.get("notes") || "meet at the curb"),
+            }),
+          });
+          setMsg("Showing window created");
+        }}
+      >
+        <p className="font-medium">Group showing window</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <input name="start" type="datetime-local" required className="rounded border px-2 py-1" />
+          <input name="end" type="datetime-local" required className="rounded border px-2 py-1" />
+          <input name="cap" type="number" defaultValue={6} className="rounded border px-2 py-1" />
+          <input name="notes" placeholder="Notes" className="rounded border px-2 py-1" />
+        </div>
+        <button type="submit" className="mt-2 rounded bg-header px-3 py-1 text-white">
+          Create window
+        </button>
+      </form>
     </div>
   );
 }

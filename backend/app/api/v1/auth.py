@@ -154,11 +154,14 @@ async def forgot(
     session: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings_dep),
     kv: KV = Depends(get_kv),
-) -> dict[str, bool]:
+) -> dict:
     token = await auth_service.issue_reset_token(session, settings, kv, str(payload.email))
     if token:
         request.app.state.mail_outbox.append({"to": str(payload.email).lower(), "typ": "reset", "token": token})
-    return {"ok": True}
+    body: dict = {"ok": True}
+    if token and settings.environment == "local" and not settings.mail_configured:
+        body["debug_token"] = token
+    return body
 
 
 @router.post("/reset")

@@ -167,6 +167,22 @@ async def download_doc(
     path = storage.root / doc.storage_key
     if not path.exists():
         raise AppError(404, "not_found", "File missing")
+    data = path.read_bytes()
+    if request.app.state.settings.watermark_downloads:
+        from datetime import UTC
+        from datetime import datetime as dt
+
+        from app.services.watermark import stamp_pdf
+
+        stamp = f"{user.email} {dt.now(UTC).strftime('%Y-%m-%d %H:%M')}Z"
+        data = stamp_pdf(data, stamp)
+        from fastapi.responses import Response as RawResponse
+
+        return RawResponse(
+            content=data,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{doc.filename}"'},
+        )
     return FileResponse(path, filename=doc.filename, media_type="application/pdf")
 
 

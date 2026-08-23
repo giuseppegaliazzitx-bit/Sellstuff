@@ -45,20 +45,64 @@ export function PipelinePage() {
               <td className="px-2 py-2">{r.status}</td>
               <td className="px-2 py-2">{r.is_late ? "late" : ""}</td>
               <td className="px-2 py-2">
-                {r.status === "submitted" ? (
-                  <button
-                    type="button"
-                    className="text-gold"
-                    onClick={async () => {
-                      await apiJson(`/api/v1/admin/offers/${r.id}`, {
-                        method: "PATCH",
-                        body: JSON.stringify({ status: "accepted" }),
-                      });
-                      await load();
-                    }}
-                  >
-                    Accept
-                  </button>
+                {r.status === "submitted" || r.status === "countered" ? (
+                  <span className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="text-gold"
+                      onClick={async () => {
+                        await apiJson(`/api/v1/admin/offers/${r.id}`, {
+                          method: "PATCH",
+                          body: JSON.stringify({ status: "accepted" }),
+                        });
+                        await load();
+                      }}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const amt = window.prompt("Counter amount USD");
+                        if (!amt) return;
+                        await apiJson(`/api/v1/admin/offers/${r.id}`, {
+                          method: "PATCH",
+                          body: JSON.stringify({
+                            status: "countered",
+                            counter_amount_cents: Math.round(Number(amt) * 100),
+                          }),
+                        });
+                        await load();
+                      }}
+                    >
+                      Counter
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await apiJson(`/api/v1/admin/offers/${r.id}`, {
+                          method: "PATCH",
+                          body: JSON.stringify({ status: "backup", rank: 1 }),
+                        });
+                        await load();
+                      }}
+                    >
+                      Backup
+                    </button>
+                    <button
+                      type="button"
+                      className="text-red-700"
+                      onClick={async () => {
+                        await apiJson(`/api/v1/admin/offers/${r.id}`, {
+                          method: "PATCH",
+                          body: JSON.stringify({ status: "rejected" }),
+                        });
+                        await load();
+                      }}
+                    >
+                      Reject
+                    </button>
+                  </span>
                 ) : null}
               </td>
             </tr>

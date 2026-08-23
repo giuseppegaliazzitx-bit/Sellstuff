@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiJson } from "../../shared/api/client";
 import type { DealPublic, MapPin, MarketOut } from "../../shared/api/types";
 import { DealCard } from "./DealCard";
@@ -7,6 +7,7 @@ import { BrowseMap } from "./BrowseMap";
 
 export function BrowsePage() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const [markets, setMarkets] = useState<MarketOut[]>([]);
   const [deals, setDeals] = useState<DealPublic[]>([]);
   const [pins, setPins] = useState<MapPin[]>([]);
@@ -124,7 +125,11 @@ export function BrowsePage() {
             Satellite
           </button>
         </div>
-        <BrowseMap pins={pins} satellite={sat} />
+        <BrowseMap
+          pins={pins}
+          satellite={sat}
+          onSelect={(id) => navigate(`/app/deals/${id}${search}`)}
+        />
       </div>
     </div>
   );

@@ -51,6 +51,9 @@ export function Header() {
               <Link to="/admin/metrics" className="hidden text-neutral-200 hover:text-white sm:inline">
                 Metrics
               </Link>
+              <Link to="/admin/mail" className="hidden text-neutral-200 hover:text-white lg:inline">
+                Mail
+              </Link>
             </>
           ) : null}
           {user && user.status === "active" ? (
