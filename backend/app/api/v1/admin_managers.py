@@ -33,6 +33,16 @@ async def _load(session: AsyncSession, manager_id: str) -> MarketManager:
     return row
 
 
+async def _market_ids(session: AsyncSession, manager_id: str) -> list[str]:
+    return list(
+        (await session.execute(select(Market.id).where(Market.manager_id == manager_id))).scalars().all()
+    )
+
+
+def _out(row: MarketManager, market_ids: list[str]) -> ManagerOut:
+    return manager_out(row, market_ids=market_ids)
+
+
 @router.get("/admin/managers", response_model=list[ManagerOut])
 async def list_managers(
     _admin: User = Depends(require_admin),
@@ -41,7 +51,7 @@ async def list_managers(
     rows = (
         (await session.execute(select(MarketManager).options(selectinload(MarketManager.markets)))).scalars().all()
     )
-    return [manager_out(r) for r in rows]
+    return [_out(r, await _market_ids(session, r.id)) for r in rows]
 
 
 @router.post("/admin/managers", response_model=ManagerOut)
@@ -69,7 +79,8 @@ async def create_manager(
         for m in markets:
             m.manager_id = row.id
     await session.commit()
-    return manager_out(await _load(session, row.id))
+    loaded = await _load(session, row.id)
+    return _out(loaded, await _market_ids(session, loaded.id))
 
 
 @router.patch("/admin/managers/{manager_id}", response_model=ManagerOut)
@@ -89,15 +100,34 @@ async def patch_manager(
     if "license" in payload:
         row.license = str(payload["license"] or "")
     if "market_ids" in payload:
-        wanted = set(payload.get("market_ids") or [])
+        raw_ids = payload.get("market_ids")
+        wanted = {str(x) for x in (raw_ids or [])}
         all_markets = (await session.execute(select(Market))).scalars().all()
         for m in all_markets:
-            if m.manager_id == row.id and m.id not in wanted:
-                m.manager_id = None
             if m.id in wanted:
                 m.manager_id = row.id
+            elif m.manager_id == row.id:
+                m.manager_id = None
+        await session.flush()
     await session.commit()
-    return manager_out(await _load(session, row.id))
+    session.expire_all()
+    loaded = await _load(session, manager_id)
+    return _out(loaded, await _market_ids(session, manager_id))
+
+
+@router.delete("/admin/managers/{manager_id}")
+async def delete_manager(
+    manager_id: str,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    row = await _load(session, manager_id)
+    markets = (await session.execute(select(Market).where(Market.manager_id == row.id))).scalars().all()
+    for m in markets:
+        m.manager_id = None
+    await session.delete(row)
+    await session.commit()
+    return {"ok": True}
 
 
 @router.post("/admin/managers/{manager_id}/photo", response_model=ManagerOut)
@@ -115,7 +145,8 @@ async def manager_photo(
     keys = process_photo(storage, f"mgr-{row.id}", photo_id, data)
     row.photo_key = keys.get("card") or keys["full"]
     await session.commit()
-    return manager_out(await _load(session, row.id))
+    loaded = await _load(session, row.id)
+    return _out(loaded, await _market_ids(session, loaded.id))
 
 
 @router.get("/admin/markets")

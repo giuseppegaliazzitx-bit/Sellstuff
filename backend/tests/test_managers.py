@@ -52,6 +52,17 @@ async def test_manager_assign_shows_on_markets(settings) -> None:
             assert assigned.status_code == 200
             again = await client.get("/api/v1/markets", headers=h)
             assert again.json()[0]["manager"]["name"] == "Maggie Owen"
+            cleared = await client.patch(
+                f"/api/v1/admin/managers/{mid}",
+                headers=h,
+                json={"market_ids": []},
+            )
+            assert cleared.status_code == 200
+            assert cleared.json()["market_ids"] == []
+            gone = await client.delete(f"/api/v1/admin/managers/{mid}", headers=h)
+            assert gone.status_code == 200
+            listed = await client.get("/api/v1/admin/managers", headers=h)
+            assert all(r["id"] != mid for r in listed.json())
         forbidden = await client.post("/api/v1/auth/register", json={
             "email": "c@example.com",
             "password": "correct-horse-battery",
