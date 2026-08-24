@@ -65,21 +65,42 @@ async def threads(
             .all()
         )
         rows = (await session.execute(select(Thread).where(Thread.id.in_(ids or ["__none__"])))).scalars().all()
-    return [{"id": t.id, "subject": t.subject, "deal_id": t.deal_id, "channel": t.channel} for t in rows]
+    users = {u.id: u for u in (await session.execute(select(User))).scalars().all()}
+    out = []
+    for t in rows:
+        if t.channel != "desk":
+            continue
+        owner = users.get(t.created_by)
+        out.append(
+            {
+                "id": t.id,
+                "subject": t.subject,
+                "deal_id": None,
+                "channel": t.channel,
+                "created_by": t.created_by,
+                "buyer_name": owner.name if owner else "",
+                "buyer_email": owner.email if owner else "",
+            }
+        )
+    return out
 
 
-@router.post("/threads")
-async def create_thread(
-    payload: dict,
-    user: User = Depends(require_active),
-    session: AsyncSession = Depends(get_db),
-) -> dict:
+async def _open_desk_thread(session: AsyncSession, user: User) -> dict:
+    existing = (
+        await session.execute(
+            select(Thread)
+            .where(Thread.created_by == user.id, Thread.channel == "desk", Thread.deal_id.is_(None))
+            .order_by(Thread.created_at.asc())
+        )
+    ).scalars().first()
+    if existing:
+        return {"id": existing.id}
     thread = Thread(
         id=new_id(),
-        subject=str(payload.get("subject") or "Chat"),
-        deal_id=payload.get("deal_id"),
+        subject="Ask the desk",
+        deal_id=None,
         created_by=user.id,
-        channel="chat",
+        channel="desk",
         created_at=_now(),
     )
     session.add(thread)
@@ -99,7 +120,7 @@ async def create_thread(
             Notification(
                 id=new_id(),
                 user_id=admin.id,
-                type="chat.new",
+                type="ask.new",
                 payload={"thread_id": thread.id},
                 created_at=_now(),
             )
@@ -114,6 +135,23 @@ async def create_thread(
     )
     await session.commit()
     return {"id": thread.id}
+
+
+@router.post("/threads")
+async def create_thread(
+    payload: dict,
+    user: User = Depends(require_active),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    return await _open_desk_thread(session, user)
+
+
+@router.post("/me/desk-thread")
+async def desk_thread(
+    user: User = Depends(require_active),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    return await _open_desk_thread(session, user)
 
 
 @router.get("/threads/{thread_id}/messages")

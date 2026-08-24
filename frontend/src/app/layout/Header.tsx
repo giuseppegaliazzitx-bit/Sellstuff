@@ -67,7 +67,7 @@ export function Header() {
                 <>
                   <Link to="/app/saved">Saved</Link>
                   <Link to="/app/offers">Offers</Link>
-                  <Link to="/app/chat">Chat</Link>
+                  <Link to="/app/ask">Ask us</Link>
                   <Link to="/app/notifications">Notifications</Link>
                   <Link to="/app/settings">Settings</Link>
                 </>
@@ -106,7 +106,7 @@ export function Header() {
                   Offers
                 </Tab>
               ) : null}
-              <Tab to="/app/chat">Chat</Tab>
+              <Tab to="/app/ask">Ask us</Tab>
               <Tab to="/app/notifications" className="relative">
                 Bell
                 {unread > 0 ? (

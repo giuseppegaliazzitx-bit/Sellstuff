@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 import { AppShell } from "./layout/AppShell";
 import { GuestOnly, PendingOnly, RequireActive, RequireAdmin } from "./guards";
 import { LoginPage } from "../features/auth/LoginPage";
@@ -58,7 +58,8 @@ export const router = createBrowserRouter([
           { path: "app/saved", element: <SavedPage /> },
           { path: "app/offers", element: <MyOffersPage /> },
           { path: "app/notifications", element: <NotificationsPage /> },
-          { path: "app/chat", element: <ChatPage /> },
+          { path: "app/ask", element: <ChatPage /> },
+          { path: "app/chat", element: <Navigate to="/app/ask" replace /> },
         ],
       },
       {

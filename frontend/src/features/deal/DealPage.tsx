@@ -20,7 +20,6 @@ export function DealPage() {
     [],
   );
   const [light, setLight] = useState<string | null>(null);
-  const [mailMsg, setMailMsg] = useState<string | null>(null);
   const back = `/app/browse${loc.search}`;
 
   useEffect(() => {
@@ -81,9 +80,6 @@ export function DealPage() {
               Call
             </button>
           )}
-          <Link to={`/app/chat?deal=${deal.id}`} className="text-gold">
-            Chat
-          </Link>
           <button
             type="button"
             className="text-gold"
@@ -153,29 +149,6 @@ export function DealPage() {
             I’m interested
           </button>
           <OfferBox dealId={deal.id} />
-          <form
-            className="mt-4 rounded border bg-white p-4 text-sm"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const body = String(new FormData(e.currentTarget).get("body") || "");
-              try {
-                await apiJson("/api/v1/mail/outbound", {
-                  method: "POST",
-                  body: JSON.stringify({ subject: `Re: ${deal.address1}`, body, lane: 1 }),
-                });
-                setMailMsg("Email queued (sandbox .eml if mail is blank).");
-              } catch (err) {
-                setMailMsg(err instanceof Error ? err.message : "Send failed");
-              }
-            }}
-          >
-            <p className="font-medium">Email the desk</p>
-            {mailMsg ? <p className="text-xs">{mailMsg}</p> : null}
-            <textarea name="body" required className="mt-2 w-full rounded border px-2 py-1" rows={3} />
-            <button type="submit" className="mt-2 rounded bg-header px-3 py-1 text-white">
-              Send
-            </button>
-          </form>
           {windows.length ? (
             <div className="mt-4 text-sm">
               <p className="font-medium">Showings</p>

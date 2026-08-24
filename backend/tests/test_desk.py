@@ -27,9 +27,11 @@ async def test_chat_and_mail_sandbox(settings) -> None:
         status = await client.get("/api/v1/mail/status", headers=h)
         assert status.status_code == 200
         assert status.json()["sandbox"] is True
-        thread = await client.post("/api/v1/threads", headers=h, json={"subject": "hello"})
+        thread = await client.post("/api/v1/me/desk-thread", headers=h, json={})
         assert thread.status_code == 200
         tid = thread.json()["id"]
+        again = await client.post("/api/v1/me/desk-thread", headers=h, json={})
+        assert again.json()["id"] == tid
         empty = await client.post(f"/api/v1/threads/{tid}/messages", headers=h, json={"body": "  "})
         assert empty.status_code == 422
         msg = await client.post(f"/api/v1/threads/{tid}/messages", headers=h, json={"body": "still available?"})

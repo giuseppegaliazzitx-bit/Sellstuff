@@ -21,3 +21,4 @@ Versioning: `v0.NN.0` per phase; Phase 12 is `v1.0.0`.
 - Admin Settings: view-as-buyer toggle; seeded demo buyer; beds/baths cannot be negative.
 - Browse filters are Your Market + Sort Options only; buyer cards no longer show Available.
 - Map pin clustering, active nav tabs, market-manager profiles, scrollable listing pane.
+- In-app deal/agent chat removed; buyers ask the desk via Ask us; market agents via phone/email.

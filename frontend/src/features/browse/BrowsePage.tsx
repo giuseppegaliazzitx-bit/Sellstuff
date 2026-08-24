@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiJson } from "../../shared/api/client";
 import type { DealPublic, MapPin, MarketOut } from "../../shared/api/types";
 import { DealCard } from "./DealCard";
@@ -62,9 +62,11 @@ export function BrowsePage() {
                 </div>
               </div>
               <div className="flex flex-row items-center gap-2 text-header">
-                <Link to={`/app/chat`} className="rounded p-1 hover:bg-chip" aria-label="Message">
-                  <MsgIcon />
-                </Link>
+                {mgr.phone ? (
+                  <a href={`sms:${mgr.phone}`} className="rounded p-1 hover:bg-chip" aria-label="Text">
+                    <MsgIcon />
+                  </a>
+                ) : null}
                 {mgr.phone ? (
                   <a href={`tel:${mgr.phone}`} className="rounded p-1 hover:bg-chip" aria-label="Call">
                     <PhoneIcon />
