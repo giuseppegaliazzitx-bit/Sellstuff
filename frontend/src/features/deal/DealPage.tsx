@@ -45,15 +45,15 @@ export function DealPage() {
   if (!deal) return <p className="p-8 text-sm text-neutral-500">Loading…</p>;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto flex max-w-5xl flex-col px-4 py-8">
       <Link to={back} className="text-sm text-gold">
         Back to Browse
       </Link>
-      <div className="mt-4 flex items-center justify-between gap-4">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-semibold">
           {deal.address1}, {deal.city}
         </h1>
-        <div className="flex gap-3 text-sm">
+        <div className="flex flex-row flex-wrap gap-3 text-sm">
           {cfg.support_phone ? (
             <a
               href={`tel:${cfg.support_phone}`}
@@ -101,9 +101,14 @@ export function DealPage() {
           </button>
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+      <div className="mt-4 flex flex-row flex-wrap gap-2">
         {deal.photos.map((src) => (
-          <button key={src} type="button" onClick={() => setLight(src)}>
+          <button
+            key={src}
+            type="button"
+            className="flex w-[calc(50%-0.25rem)] sm:w-[calc(25%-0.4rem)]"
+            onClick={() => setLight(src)}
+          >
             <img src={src} alt="" className="h-36 w-full rounded object-cover" />
           </button>
         ))}
@@ -117,8 +122,8 @@ export function DealPage() {
           <img src={light} alt="" className="max-h-[90vh] max-w-[90vw]" />
         </button>
       ) : null}
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
-        <div>
+      <div className="mt-6 flex flex-col gap-6 md:flex-row">
+        <div className="flex flex-1 flex-col">
           <p className="text-3xl font-semibold" data-testid="list-price">
             {formatUsd(deal.list_price_cents)}
           </p>
@@ -139,7 +144,7 @@ export function DealPage() {
             <p className="mt-3 text-xs uppercase tracking-wide text-gold">Early access</p>
           ) : null}
         </div>
-        <div>
+        <div className="flex flex-1 flex-col">
           <button
             type="button"
             className="rounded bg-gold px-4 py-2 text-sm font-semibold text-white"

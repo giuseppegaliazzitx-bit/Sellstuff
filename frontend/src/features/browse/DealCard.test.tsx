@@ -45,6 +45,7 @@ test("card shows price and chips, never ARV or rehab", () => {
   expect(screen.getByText(/916 Eldridge/)).toBeInTheDocument();
   expect(screen.getByText("Reduced")).toBeInTheDocument();
   expect(screen.getByText("Offers due")).toBeInTheDocument();
+  expect(container.textContent).not.toMatch(/available/i);
   expect(container.textContent).not.toMatch(/ARV/i);
   expect(container.textContent).not.toMatch(/rehab/i);
   expect(container.textContent).not.toMatch(/assignment/i);

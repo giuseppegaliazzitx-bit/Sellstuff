@@ -19,3 +19,4 @@ Versioning: `v0.NN.0` per phase; Phase 12 is `v1.0.0`.
 - Operator catalog of every `.env` knob: `docs/runbooks/env-variables.md`.
 - Open signup: `REQUIRE_ADMIN_APPROVAL=false`; landing CTA is Sign up, not Request access.
 - Admin Settings: view-as-buyer toggle; seeded demo buyer; beds/baths cannot be negative.
+- Browse filters are Your Market + Sort Options only; buyer cards no longer show Available.

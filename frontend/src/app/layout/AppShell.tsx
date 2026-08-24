@@ -41,16 +41,14 @@ export function AppShell() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-neutral-200 bg-white px-4 py-6 text-center text-xs text-neutral-500">
-        © {new Date().getFullYear()} {legal}. Off-market inventory.{" "}
+      <footer className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-neutral-200 bg-white px-4 py-6 text-center text-xs text-neutral-500">
+        <span>© {new Date().getFullYear()} {legal}. Off-market inventory.</span>
         <a href="/privacy" className="text-gold">
           Privacy
-        </a>{" "}
-        ·{" "}
+        </a>
         <a href="/terms" className="text-gold">
           Terms
-        </a>{" "}
-        ·{" "}
+        </a>
         <a href="/disclosures" className="text-gold">
           Disclosures
         </a>

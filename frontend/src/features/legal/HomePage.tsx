@@ -14,13 +14,13 @@ export function HomePage() {
     : "/login";
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+    <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-20 text-center">
       <p className="text-xs uppercase tracking-[0.2em] text-gold">Private wholesale desk</p>
       <h1 className="mt-4 text-4xl font-semibold tracking-tight text-neutral-900">{cfg.brand_name}</h1>
       <p className="mt-4 text-base text-neutral-600">
         {cfg.tagline || "Off-market inventory. Sign up or log in to browse."}
       </p>
-      <div className="mt-8 flex justify-center gap-3">
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link to={next} className="rounded bg-gold px-5 py-2 text-sm font-semibold text-white hover:bg-gold-hover">
           {user ? "Enter desk" : "Log in"}
         </Link>

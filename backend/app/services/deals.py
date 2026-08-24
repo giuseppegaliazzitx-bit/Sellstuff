@@ -209,6 +209,10 @@ def sort_deals(deals: list[Deal], sort: str) -> list[Deal]:
         return sorted(deals, key=lambda d: d.list_price_cents)
     if sort == "price_desc":
         return sorted(deals, key=lambda d: d.list_price_cents, reverse=True)
+    if sort == "beds":
+        return sorted(deals, key=lambda d: d.beds, reverse=True)
+    if sort == "baths":
+        return sorted(deals, key=lambda d: d.baths, reverse=True)
     if sort == "sqft":
         return sorted(deals, key=lambda d: d.sqft, reverse=True)
     return sorted(deals, key=lambda d: d.created_at, reverse=True)

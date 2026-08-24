@@ -38,7 +38,7 @@ export function Header() {
           </button>
         </div>
       ) : null}
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex min-h-14 max-w-6xl flex-row flex-wrap items-center justify-between gap-2 px-4 py-2">
         <Link to={home} className="flex items-center gap-2" aria-label={cfg.brand_name}>
           {cfg.logo_url ? (
             <img src={cfg.logo_url} alt={cfg.brand_name} className="h-7" />
@@ -46,6 +46,7 @@ export function Header() {
             <span className="font-semibold tracking-wide text-gold">{cfg.brand_name}</span>
           )}
         </Link>
+        <div className="flex flex-row flex-wrap items-center gap-3">
         {user ? (
           <details className="relative md:hidden">
             <summary className="cursor-pointer list-none text-sm text-neutral-200">Menu</summary>
@@ -73,7 +74,7 @@ export function Header() {
             </div>
           </details>
         ) : null}
-        <nav className="flex items-center gap-4 text-sm md:gap-6">
+        <nav className="hidden flex-row flex-wrap items-center gap-4 text-sm md:flex md:gap-6">
           {user && user.status === "active" ? (
             <Link to="/app/browse" className="text-neutral-200 hover:text-white">
               Browse
@@ -122,25 +123,24 @@ export function Header() {
                   </span>
                 ) : null}
               </Link>
-            </>
-          ) : null}
-          {user ? (
-            <>
               {user.status === "active" ? (
                 <Link to="/app/settings" className="text-neutral-200 hover:text-white">
                   Settings
                 </Link>
               ) : null}
-              <button type="button" onClick={() => logout()} className="text-gold hover:text-gold-hover">
-                Log out
-              </button>
             </>
+          ) : null}
+        </nav>
+          {user ? (
+            <button type="button" onClick={() => logout()} className="text-gold hover:text-gold-hover">
+              Log out
+            </button>
           ) : (
             <Link to="/login" className="text-gold hover:text-gold-hover">
               Log in
             </Link>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );
