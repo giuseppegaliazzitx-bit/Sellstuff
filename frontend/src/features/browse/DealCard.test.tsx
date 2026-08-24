@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { vi } from "vitest";
 import { DealCard } from "./DealCard";
 import type { DealPublic } from "../../shared/api/types";
 
@@ -49,4 +50,15 @@ test("card shows price and chips, never ARV or rehab", () => {
   expect(container.textContent).not.toMatch(/ARV/i);
   expect(container.textContent).not.toMatch(/rehab/i);
   expect(container.textContent).not.toMatch(/assignment/i);
+});
+
+test("card with onOpen opens overlay instead of navigating", () => {
+  const onOpen = vi.fn();
+  render(
+    <MemoryRouter>
+      <DealCard deal={deal} onOpen={onOpen} />
+    </MemoryRouter>,
+  );
+  fireEvent.click(screen.getByTestId("deal-card"));
+  expect(onOpen).toHaveBeenCalledWith("1");
 });

@@ -9,6 +9,19 @@ import { BrowseMap } from "../browse/BrowseMap";
 
 export function DealPage() {
   const { id } = useParams();
+  if (!id) return <p className="p-8 text-sm text-neutral-500">Missing deal.</p>;
+  return <DealView id={id} />;
+}
+
+export function DealView({
+  id,
+  variant = "page",
+  onClose,
+}: {
+  id: string;
+  variant?: "page" | "modal";
+  onClose?: () => void;
+}) {
   const loc = useLocation();
   const cfg = useConfig();
   const { user } = useAuth();
@@ -23,7 +36,6 @@ export function DealPage() {
   const back = `/app/browse${loc.search}`;
 
   useEffect(() => {
-    if (!id) return;
     apiJson<DealPublic>(`/api/v1/deals/${id}`)
       .then(setDeal)
       .catch((e: Error) => setError(e.message));
@@ -44,10 +56,16 @@ export function DealPage() {
   if (!deal) return <p className="p-8 text-sm text-neutral-500">Loading…</p>;
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col px-4 py-8">
-      <Link to={back} className="text-sm text-gold">
-        Back to Browse
-      </Link>
+    <div className={`flex flex-col ${variant === "page" ? "mx-auto max-w-5xl px-4 py-8" : "px-1 py-2"}`}>
+      {variant === "page" ? (
+        <Link to={back} className="text-sm text-gold">
+          Back to Browse
+        </Link>
+      ) : (
+        <button type="button" className="self-end text-sm text-gold" onClick={onClose}>
+          Close
+        </button>
+      )}
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-semibold">
           {deal.address1}, {deal.city}
@@ -201,7 +219,7 @@ export function DealPage() {
           </details>
         ))}
       </div>
-      {deal.lat != null && deal.lng != null ? (
+      {variant === "page" && deal.lat != null && deal.lng != null ? (
         <div className="mt-8 h-56 overflow-hidden rounded border">
           <BrowseMap
             pins={[

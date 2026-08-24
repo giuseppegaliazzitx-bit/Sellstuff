@@ -2,14 +2,18 @@ import { Link } from "react-router-dom";
 import { formatUsd } from "../../shared/money";
 import type { DealPublic } from "../../shared/api/types";
 
-export function DealCard({ deal, search }: { deal: DealPublic; search?: string }) {
+export function DealCard({
+  deal,
+  search,
+  onOpen,
+}: {
+  deal: DealPublic;
+  search?: string;
+  onOpen?: (id: string) => void;
+}) {
   const href = `/app/deals/${deal.id}${search || ""}`;
-  return (
-    <Link
-      to={href}
-      className="flex w-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm"
-      data-testid="deal-card"
-    >
+  const body = (
+    <>
       <div className="relative flex h-40 flex-col bg-chip">
         {deal.cover_photo ? (
           <img src={deal.cover_photo} alt="" className="h-full w-full object-cover" />
@@ -43,6 +47,20 @@ export function DealCard({ deal, search }: { deal: DealPublic; search?: string }
           <span className="rounded-full bg-chip px-2 py-1">{deal.sqft.toLocaleString()} sqft</span>
         </div>
       </div>
+    </>
+  );
+  const cls =
+    "flex w-full flex-col overflow-hidden rounded-xl border border-amber-900/10 bg-card text-left shadow-sm";
+  if (onOpen) {
+    return (
+      <button type="button" className={cls} data-testid="deal-card" onClick={() => onOpen(deal.id)}>
+        {body}
+      </button>
+    );
+  }
+  return (
+    <Link to={href} className={cls} data-testid="deal-card">
+      {body}
     </Link>
   );
 }

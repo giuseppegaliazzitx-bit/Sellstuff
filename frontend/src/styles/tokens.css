@@ -1,9 +1,9 @@
 :root {
-  --color-header: #2b2b2b;
-  --color-gold: #c0985c;
-  --color-gold-hover: #a8844e;
-  --color-page: #f7f6f3;
-  --color-card: #ffffff;
-  --color-chip: #f1eee8;
-  --color-price: #1a1a1a;
+  --color-header: #4a2c1f;
+  --color-gold: #c45c26;
+  --color-gold-hover: #a84b1e;
+  --color-page: #f8f1e7;
+  --color-card: #fffaf3;
+  --color-chip: #efe3d4;
+  --color-price: #3a2218;
 }

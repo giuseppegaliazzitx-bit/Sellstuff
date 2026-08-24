@@ -11,8 +11,15 @@ body,
 }
 
 body {
-  font-family: "IBM Plex Sans", "Source Sans 3", system-ui, sans-serif;
+  font-family: "Nunito Sans", system-ui, sans-serif;
   background: var(--color-page);
+  color: var(--color-price);
+}
+
+h1,
+h2,
+h3 {
+  font-family: Fraunces, Georgia, serif;
 }
 
 .pin-cluster {
@@ -22,7 +29,7 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 9999px;
-  background: #c0985c;
+  background: #c45c26;
   color: #fff;
   font-size: 13px;
   font-weight: 600;

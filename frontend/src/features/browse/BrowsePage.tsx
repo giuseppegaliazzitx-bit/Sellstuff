@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { apiJson } from "../../shared/api/client";
 import type { DealPublic, MapPin, MarketOut } from "../../shared/api/types";
 import { DealCard } from "./DealCard";
 import { BrowseMap } from "./BrowseMap";
+import { CopyContact } from "./CopyContact";
+import { DealModal } from "../deal/DealModal";
 
 const SORTS = [
   { value: "price_asc", label: "Price (low to high)" },
@@ -15,11 +17,11 @@ const SORTS = [
 
 export function BrowsePage() {
   const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
   const [markets, setMarkets] = useState<MarketOut[]>([]);
   const [deals, setDeals] = useState<DealPublic[]>([]);
   const [pins, setPins] = useState<MapPin[]>([]);
   const [sat, setSat] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
   const market = params.get("market") || "";
   const sort = params.get("sort") || "price_asc";
   const current = markets.find((m) => m.slug === market) || markets[0];
@@ -61,21 +63,21 @@ export function BrowsePage() {
                   {mgr.license ? <p className="text-xs text-neutral-500">{mgr.license}</p> : null}
                 </div>
               </div>
-              <div className="flex flex-row items-center gap-2 text-header">
+              <div className="flex flex-row items-center gap-1 text-header">
                 {mgr.phone ? (
-                  <a href={`sms:${mgr.phone}`} className="rounded p-1 hover:bg-chip" aria-label="Text">
+                  <CopyContact value={mgr.phone} label="phone">
                     <MsgIcon />
-                  </a>
+                  </CopyContact>
                 ) : null}
                 {mgr.phone ? (
-                  <a href={`tel:${mgr.phone}`} className="rounded p-1 hover:bg-chip" aria-label="Call">
+                  <CopyContact value={mgr.phone} label="phone">
                     <PhoneIcon />
-                  </a>
+                  </CopyContact>
                 ) : null}
                 {mgr.email ? (
-                  <a href={`mailto:${mgr.email}`} className="rounded p-1 hover:bg-chip" aria-label="Email">
+                  <CopyContact value={mgr.email} label="email">
                     <MailIcon />
-                  </a>
+                  </CopyContact>
                 ) : null}
               </div>
             </div>
@@ -122,7 +124,7 @@ export function BrowsePage() {
         <div className="flex min-h-0 flex-1 flex-row flex-wrap content-start gap-4 overflow-y-auto p-4">
           {deals.map((d) => (
             <div key={d.id} className="flex w-full sm:w-[calc(50%-0.5rem)]">
-              <DealCard deal={d} search={search} />
+              <DealCard deal={d} search={search} onOpen={setOpenId} />
             </div>
           ))}
           {deals.length === 0 ? (
@@ -150,9 +152,10 @@ export function BrowsePage() {
         <BrowseMap
           pins={pins}
           satellite={sat}
-          onSelect={(id) => navigate(`/app/deals/${id}${search}`)}
+          onSelect={(id) => setOpenId(id)}
         />
       </div>
+      {openId ? <DealModal dealId={openId} onClose={() => setOpenId(null)} /> : null}
     </div>
   );
 }
