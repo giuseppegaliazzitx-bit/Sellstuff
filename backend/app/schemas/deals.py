@@ -173,6 +173,16 @@ class MapPin(BaseModel):
     offers_due_at: datetime | None = None
 
 
+class ManagerOut(BaseModel):
+    id: str
+    name: str
+    phone: str = ""
+    email: str = ""
+    license: str = ""
+    photo_url: str | None = None
+    market_ids: list[str] = []
+
+
 class MarketOut(BaseModel):
     id: str
     slug: str
@@ -182,6 +192,7 @@ class MarketOut(BaseModel):
     center_lng: float
     zoom: int
     timezone: str
+    manager: ManagerOut | None = None
 
 
 def with_mao(admin: DealAdmin) -> DealAdmin:

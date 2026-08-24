@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, NavLink } from "react-router-dom";
 import { useConfig } from "../../shared/config";
 import { useAuth } from "../../shared/auth";
 import { apiJson } from "../../shared/api/client";
@@ -56,6 +56,7 @@ export function Header() {
                 <>
                   <Link to="/admin/deals">Inventory</Link>
                   <Link to="/admin/buyers">Buyers</Link>
+                  <Link to="/admin/managers">Managers</Link>
                   <Link to="/admin/offers">Offers</Link>
                   <Link to="/admin/blasts">Blasts</Link>
                   <Link to="/admin/metrics">Metrics</Link>
@@ -74,60 +75,47 @@ export function Header() {
             </div>
           </details>
         ) : null}
-        <nav className="hidden flex-row flex-wrap items-center gap-4 text-sm md:flex md:gap-6">
-          {user && user.status === "active" ? (
-            <Link to="/app/browse" className="text-neutral-200 hover:text-white">
-              Browse
-            </Link>
-          ) : (
-            <span className="hidden text-neutral-400 sm:inline">Browse</span>
-          )}
+        <nav className="hidden flex-row flex-wrap items-center gap-1 text-sm md:flex">
+          {user && user.status === "active" ? <Tab to="/app/browse">Browse</Tab> : null}
           {showAdmin ? (
             <>
-              <Link to="/admin/deals" className="text-neutral-200 hover:text-white">
-                Inventory
-              </Link>
-              <Link to="/admin/buyers" className="text-neutral-200 hover:text-white">
-                Buyers
-              </Link>
-              <Link to="/admin/offers" className="hidden text-neutral-200 hover:text-white sm:inline">
+              <Tab to="/admin/deals">Inventory</Tab>
+              <Tab to="/admin/buyers">Buyers</Tab>
+              <Tab to="/admin/managers">Managers</Tab>
+              <Tab to="/admin/offers" className="hidden sm:inline-flex">
                 Offers
-              </Link>
-              <Link to="/admin/blasts" className="hidden text-neutral-200 hover:text-white sm:inline">
+              </Tab>
+              <Tab to="/admin/blasts" className="hidden sm:inline-flex">
                 Blasts
-              </Link>
-              <Link to="/admin/metrics" className="hidden text-neutral-200 hover:text-white sm:inline">
+              </Tab>
+              <Tab to="/admin/metrics" className="hidden sm:inline-flex">
                 Metrics
-              </Link>
-              <Link to="/admin/mail" className="hidden text-neutral-200 hover:text-white lg:inline">
+              </Tab>
+              <Tab to="/admin/mail" className="hidden lg:inline-flex">
                 Mail
-              </Link>
+              </Tab>
             </>
           ) : null}
           {user && user.status === "active" ? (
             <>
-              <Link to="/app/saved" className="hidden text-neutral-200 hover:text-white sm:inline">
+              <Tab to="/app/saved" className="hidden sm:inline-flex">
                 Saved
-              </Link>
-              <Link to="/app/offers" className="hidden text-neutral-200 hover:text-white sm:inline">
-                Offers
-              </Link>
-              <Link to="/app/chat" className="text-neutral-200 hover:text-white">
-                Chat
-              </Link>
-              <Link to="/app/notifications" className="relative text-neutral-200 hover:text-white">
+              </Tab>
+              {!showAdmin ? (
+                <Tab to="/app/offers" className="hidden sm:inline-flex">
+                  Offers
+                </Tab>
+              ) : null}
+              <Tab to="/app/chat">Chat</Tab>
+              <Tab to="/app/notifications" className="relative">
                 Bell
                 {unread > 0 ? (
-                  <span className="absolute -right-2 -top-1 rounded-full bg-gold px-1 text-[10px] text-white">
+                  <span className="absolute -right-1 -top-1 rounded-full bg-gold px-1 text-[10px] text-white">
                     {unread}
                   </span>
                 ) : null}
-              </Link>
-              {user.status === "active" ? (
-                <Link to="/app/settings" className="text-neutral-200 hover:text-white">
-                  Settings
-                </Link>
-              ) : null}
+              </Tab>
+              <Tab to="/app/settings">Settings</Tab>
             </>
           ) : null}
         </nav>
@@ -143,5 +131,28 @@ export function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+function Tab({
+  to,
+  children,
+  className = "",
+}: {
+  to: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `inline-flex items-center rounded px-2 py-1 ${
+          isActive ? "bg-gold text-white" : "text-neutral-200 hover:text-white"
+        } ${className}`
+      }
+    >
+      {children}
+    </NavLink>
   );
 }

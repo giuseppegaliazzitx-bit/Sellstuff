@@ -28,6 +28,7 @@ from app.services.deals import (
     list_markets,
     list_public_deals,
     log_event,
+    market_out,
     saved_ids,
     to_pins,
     to_public,
@@ -46,19 +47,7 @@ async def markets(
     session: AsyncSession = Depends(get_db),
 ) -> list[MarketOut]:
     rows = await list_markets(session)
-    return [
-        MarketOut(
-            id=m.id,
-            slug=m.slug,
-            name=m.name,
-            state=m.state,
-            center_lat=m.center_lat,
-            center_lng=m.center_lng,
-            zoom=m.zoom,
-            timezone=m.timezone,
-        )
-        for m in rows
-    ]
+    return [market_out(m) for m in rows]
 
 
 @router.get("/deals", response_model=list[DealPublic])

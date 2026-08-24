@@ -114,6 +114,16 @@ export interface MapPin {
   offers_due_at: string | null;
 }
 
+export interface MarketManager {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  license: string;
+  photo_url: string | null;
+  market_ids: string[];
+}
+
 export interface MarketOut {
   id: string;
   slug: string;
@@ -123,6 +133,7 @@ export interface MarketOut {
   center_lng: number;
   zoom: number;
   timezone: string;
+  manager?: MarketManager | null;
 }
 
 export interface HealthResponse {

@@ -73,6 +73,9 @@ def seed_admin(settings: Settings) -> None:
     if not __import__("os").environ.get("PYTEST_VERSION"):
         seed_demo_buyer(settings)
         seed_product(settings)
+        from app.services.seed import seed_market_manager
+
+        seed_market_manager(settings)
 
 
 def seed_demo_buyer(settings: Settings) -> None:

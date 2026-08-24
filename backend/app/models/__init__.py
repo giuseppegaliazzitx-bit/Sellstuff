@@ -30,6 +30,7 @@ from app.models.inventory import (
     DealPriceHistory,
     DealStatusHistory,
     Market,
+    MarketManager,
     Notice,
 )
 
@@ -52,6 +53,7 @@ __all__ = [
     "Interest",
     "MailboxState",
     "Market",
+    "MarketManager",
     "Message",
     "Notice",
     "Notification",

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import Settings
 from app.db.session import to_sync_url
-from app.models import Deal, DealPhoto, DealPriceHistory, Market, Notice, User, new_id
+from app.models import Deal, DealPhoto, DealPriceHistory, Market, MarketManager, Notice, User, new_id
 
 
 def _now() -> datetime:
@@ -147,6 +147,32 @@ def seed_product(settings: Settings) -> None:
                             at=now - timedelta(days=2),
                         )
                     )
+            session.commit()
+    finally:
+        engine.dispose()
+
+
+def seed_market_manager(settings: Settings) -> None:
+    engine = create_engine(to_sync_url(settings.database_url))
+    try:
+        with Session(engine) as session:
+            if session.scalar(select(MarketManager).limit(1)):
+                return
+            admin = session.scalar(select(User).where(User.role == "admin"))
+            row = MarketManager(
+                id=new_id(),
+                name=(admin.name if admin else "Market desk"),
+                phone="",
+                email=(admin.email if admin else ""),
+                license="",
+                created_at=_now(),
+            )
+            session.add(row)
+            session.flush()
+            markets = list(session.scalars(select(Market)).all())
+            for m in markets:
+                if m.manager_id is None:
+                    m.manager_id = row.id
             session.commit()
     finally:
         engine.dispose()

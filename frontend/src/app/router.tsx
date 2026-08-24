@@ -16,6 +16,7 @@ import { MetricsPage } from "../features/admin/MetricsPage";
 import { BlastsPage } from "../features/admin/BlastsPage";
 import { PipelinePage } from "../features/admin/PipelinePage";
 import { MailboxPage } from "../features/admin/MailboxPage";
+import { ManagersPage } from "../features/admin/ManagersPage";
 import { DealEditorPage } from "../features/admin/DealEditorPage";
 import { BuyerDetailPage } from "../features/admin/BuyerDetailPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
@@ -71,6 +72,7 @@ export const router = createBrowserRouter([
           { path: "admin/blasts", element: <BlastsPage /> },
           { path: "admin/offers", element: <PipelinePage /> },
           { path: "admin/mail", element: <MailboxPage /> },
+          { path: "admin/managers", element: <ManagersPage /> },
         ],
       },
     ],

@@ -24,7 +24,9 @@ from app.schemas.deals import (
     DealCreate,
     DealPatch,
     DealPublic,
+    ManagerOut,
     MapPin,
+    MarketOut,
     PriceHistoryPublic,
 )
 from app.services.money import mao_cents, price_label
@@ -391,8 +393,46 @@ async def to_pins(deals: list[Deal]) -> list[MapPin]:
     return pins
 
 
+def manager_out(row, *, market_ids: list[str] | None = None) -> ManagerOut:
+    photo = f"/media/{row.photo_key}" if row.photo_key else None
+    if market_ids is None:
+        market_ids = [m.id for m in getattr(row, "markets", None) or []]
+    return ManagerOut(
+        id=row.id,
+        name=row.name,
+        phone=row.phone,
+        email=row.email,
+        license=row.license,
+        photo_url=photo,
+        market_ids=list(market_ids),
+    )
+
+
+def market_out(m: Market) -> MarketOut:
+    mgr = m.manager
+    return MarketOut(
+        id=m.id,
+        slug=m.slug,
+        name=m.name,
+        state=m.state,
+        center_lat=m.center_lat,
+        center_lng=m.center_lng,
+        zoom=m.zoom,
+        timezone=m.timezone,
+        manager=manager_out(mgr, market_ids=[m.id]) if mgr else None,
+    )
+
+
 async def list_markets(session: AsyncSession) -> list[Market]:
-    return list((await session.execute(select(Market).where(Market.is_active.is_(True)))).scalars().all())
+    return list(
+        (
+            await session.execute(
+                select(Market).options(selectinload(Market.manager)).where(Market.is_active.is_(True))
+            )
+        )
+        .scalars()
+        .all()
+    )
 
 
 async def log_event(
