@@ -111,8 +111,10 @@ async def upload_photo(
     )
     if is_cover:
         deal.cover_photo_id = photo_id
+    deal_id = deal.id
     await session.commit()
-    return to_admin(await get_deal(session, deal.id))
+    session.expire_all()
+    return to_admin(await get_deal(session, deal_id))
 
 
 @router.post("/{deal_id}/documents")

@@ -64,10 +64,12 @@ class DealAdmin(DealPublic):
     hud_fmr_cents: int | None = None
     days_to_close: int | None = None
     early_access_until: datetime | None = None
+    published_at: datetime | None = None
+    days_on_market: int | None = None
 
 
 class DealCreate(BaseModel):
-    market_id: str
+    market_id: str | None = None
     list_price_cents: int
     arv_cents: int
     address1: str
@@ -143,6 +145,9 @@ class DealPatch(BaseModel):
     baths: float | None = None
     sqft: int | None = None
     year_built: int | None = None
+    city: str | None = None
+    state: str | None = None
+    postal_code: str | None = None
     deal_structure: str | None = None
     contract_executed_at: datetime | None = None
     option_period_ends_at: datetime | None = None
@@ -173,6 +178,13 @@ class MapPin(BaseModel):
     offers_due_at: datetime | None = None
 
 
+class ManagerPlace(BaseModel):
+    city: str
+    state: str
+    label: str = ""
+    market_id: str = ""
+
+
 class ManagerOut(BaseModel):
     id: str
     name: str
@@ -181,17 +193,34 @@ class ManagerOut(BaseModel):
     license: str = ""
     photo_url: str | None = None
     market_ids: list[str] = []
+    places: list[ManagerPlace] = []
+
+
+class PlaceOut(BaseModel):
+    city: str
+    state: str
+    lat: float
+    lng: float
+    timezone: str
+    label: str
+
+
+class MarketCreate(BaseModel):
+    city: str
+    state: str
 
 
 class MarketOut(BaseModel):
     id: str
     slug: str
     name: str
+    city: str = ""
     state: str
     center_lat: float
     center_lng: float
     zoom: int
     timezone: str
+    listing_count: int = 0
     manager: ManagerOut | None = None
 
 

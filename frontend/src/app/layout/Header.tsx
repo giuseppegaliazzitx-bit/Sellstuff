@@ -55,6 +55,7 @@ export function Header() {
                 {showAdmin ? (
                   <>
                     <Link to="/admin/deals">Inventory</Link>
+                    <Link to="/admin/markets">Markets</Link>
                     <Link to="/admin/buyers">Buyers</Link>
                     <Link to="/admin/managers">Managers</Link>
                     <Link to="/admin/offers">Pipeline</Link>
@@ -65,7 +66,7 @@ export function Header() {
                 ) : null}
                 {user.status === "active" ? (
                   <>
-                    <Link to="/app/saved">Saved</Link>
+                    {!showAdmin ? <Link to="/app/saved">Saved</Link> : null}
                     <Link to="/app/ask">Ask us</Link>
                     <Link to="/app/notifications">Notifications</Link>
                     <Link to="/app/settings">Settings</Link>
@@ -79,6 +80,7 @@ export function Header() {
             {showAdmin ? (
               <>
                 <Tab to="/admin/deals">Inventory</Tab>
+                <Tab to="/admin/markets">Markets</Tab>
                 <Tab to="/admin/buyers">Buyers</Tab>
                 <Tab to="/admin/managers">Managers</Tab>
                 <Tab to="/admin/offers">Pipeline</Tab>
@@ -89,7 +91,7 @@ export function Header() {
             ) : null}
             {user && user.status === "active" ? (
               <>
-                <Tab to="/app/saved">Saved</Tab>
+                {!showAdmin ? <Tab to="/app/saved">Saved</Tab> : null}
                 <Tab to="/app/ask">Ask us</Tab>
                 <Tab to="/app/notifications" className="relative">
                   Bell

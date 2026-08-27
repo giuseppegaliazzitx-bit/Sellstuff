@@ -11,8 +11,16 @@ from app.core.deps import get_db, require_admin
 from app.core.errors import AppError
 from app.integrations.storage import build_storage
 from app.models import Market, MarketManager, User, new_id
-from app.schemas.deals import ManagerOut
-from app.services.deals import manager_out, market_out
+from app.schemas.deals import ManagerOut, MarketCreate, MarketOut, PlaceOut
+from app.services.deals import (
+    create_market_from_place,
+    deactivate_market,
+    ensure_market,
+    list_markets,
+    live_listing_counts,
+    manager_out,
+    market_out,
+)
 from app.services.media import process_photo
 
 router = APIRouter(tags=["admin-managers"])
@@ -78,6 +86,8 @@ async def create_manager(
         markets = (await session.execute(select(Market).where(Market.id.in_(ids)))).scalars().all()
         for m in markets:
             m.manager_id = row.id
+    if payload.get("places") is not None:
+        await _assign_places(session, row, payload.get("places") or [])
     await session.commit()
     loaded = await _load(session, row.id)
     return _out(loaded, await _market_ids(session, loaded.id))
@@ -99,7 +109,10 @@ async def patch_manager(
         row.email = str(payload["email"] or "")
     if "license" in payload:
         row.license = str(payload["license"] or "")
-    if "market_ids" in payload:
+    if "places" in payload:
+        await _assign_places(session, row, payload.get("places") or [])
+        await session.flush()
+    elif "market_ids" in payload:
         raw_ids = payload.get("market_ids")
         wanted = {str(x) for x in (raw_ids or [])}
         all_markets = (await session.execute(select(Market))).scalars().all()
@@ -151,9 +164,55 @@ async def manager_photo(
 
 @router.get("/admin/markets")
 async def admin_markets(
+    q: str | None = None,
     _admin: User = Depends(require_admin),
     session: AsyncSession = Depends(get_db),
-):
-    from app.services.deals import list_markets
+) -> list[MarketOut]:
+    rows = await list_markets(session, q=q, include_inactive=False)
+    counts = await live_listing_counts(session)
+    return [market_out(m, listing_count=counts.get(m.id, 0)) for m in rows]
 
-    return [market_out(m) for m in await list_markets(session)]
+
+@router.get("/admin/places", response_model=list[PlaceOut])
+async def admin_places(
+    q: str = "",
+    limit: int = 400,
+    _admin: User = Depends(require_admin),
+) -> list[PlaceOut]:
+    from app.data.us_places import search_places
+
+    return [PlaceOut(**row) for row in search_places(q, limit=max(1, min(limit, 500)))]
+
+
+async def _assign_places(session: AsyncSession, row: MarketManager, places: list) -> None:
+    wanted: set[str] = set()
+    for raw in places:
+        if not isinstance(raw, dict):
+            continue
+        market = await ensure_market(session, str(raw.get("city") or ""), str(raw.get("state") or ""))
+        market.manager_id = row.id
+        wanted.add(market.id)
+    owned = (await session.execute(select(Market).where(Market.manager_id == row.id))).scalars().all()
+    for m in owned:
+        if m.id not in wanted:
+            m.manager_id = None
+
+
+@router.post("/admin/markets", response_model=MarketOut)
+async def create_admin_market(
+    payload: MarketCreate,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> MarketOut:
+    row = await create_market_from_place(session, payload.city, payload.state)
+    return market_out(row)
+
+
+@router.delete("/admin/markets/{market_id}")
+async def delete_admin_market(
+    market_id: str,
+    _admin: User = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+) -> dict:
+    await deactivate_market(session, market_id)
+    return {"deleted": True, "kept": True}

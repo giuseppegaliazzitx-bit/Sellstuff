@@ -14,6 +14,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": "http://127.0.0.1:8000",
+      "/media": "http://127.0.0.1:8000",
       "/healthz": "http://127.0.0.1:8000",
       "/version": "http://127.0.0.1:8000",
       "/openapi.json": "http://127.0.0.1:8000",

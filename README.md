@@ -1,6 +1,7 @@
 # Northstar Dispo
 
-Private wholesale real estate marketplace (buyer portal + dispo desk).
+
+ real estate marketplace (buyer portal + dispo desk).
 Brand, phone, domain, and mailbox live in `.env` — never in code.
 
 **Local-first:** this repo runs on Windows with Python + Node. Docker/Compose files are in the tree for later (Phase 12 handoff). You do not need Docker, Postgres, Redis, or MinIO to develop Phase 0–n on this machine.

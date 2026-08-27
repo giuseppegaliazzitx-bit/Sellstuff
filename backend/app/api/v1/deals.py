@@ -27,6 +27,7 @@ from app.services.deals import (
     get_deal,
     list_markets,
     list_public_deals,
+    live_listing_counts,
     log_event,
     market_out,
     saved_ids,
@@ -43,11 +44,13 @@ def _tier(user: User) -> str:
 
 @router.get("/markets", response_model=list[MarketOut])
 async def markets(
+    q: str | None = None,
     _user: User = Depends(require_active),
     session: AsyncSession = Depends(get_db),
 ) -> list[MarketOut]:
-    rows = await list_markets(session)
-    return [market_out(m) for m in rows]
+    rows = await list_markets(session, q=q, listed_only=True)
+    counts = await live_listing_counts(session)
+    return [market_out(m, listing_count=counts.get(m.id, 0)) for m in rows]
 
 
 @router.get("/deals", response_model=list[DealPublic])

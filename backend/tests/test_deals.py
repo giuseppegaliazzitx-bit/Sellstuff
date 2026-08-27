@@ -116,6 +116,8 @@ async def test_admin_json_has_desk_fields_client_does_not(admin_env, settings) -
     assert "lockbox_code" in admin_json
     assert admin_json["lockbox_code"] == "4321"
     assert isinstance(admin_json["mao_cents"], int)
+    assert admin_json.get("published_at")
+    assert admin_json.get("days_on_market") is not None
 
     await client.post(
         "/api/v1/auth/register",
@@ -140,6 +142,8 @@ async def test_admin_json_has_desk_fields_client_does_not(admin_env, settings) -
     assert_public_clean(data)
     for key in DENYLIST:
         assert key not in data
+    assert "published_at" not in data
+    assert "days_on_market" not in data
     pins = await client.get("/api/v1/map/pins", headers=_auth(buyer_token))
     assert pins.status_code == 200
     assert_public_clean(pins.json())

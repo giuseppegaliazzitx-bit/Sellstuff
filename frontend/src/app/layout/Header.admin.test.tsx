@@ -10,9 +10,9 @@ vi.mock("../../shared/auth", () => ({
     ready: true,
     user: {
       id: "1",
-      email: "b@x.com",
-      name: "Buyer",
-      role: "client",
+      email: "admin@localhost",
+      name: "Admin",
+      role: "admin",
       status: "active",
       email_verified: true,
       terms_accepted: true,
@@ -20,6 +20,10 @@ vi.mock("../../shared/auth", () => ({
     logout: vi.fn(),
     refreshUser: vi.fn(),
   }),
+}));
+
+vi.mock("../../shared/api/client", () => ({
+  apiJson: async () => [],
 }));
 
 const cfg: PublicConfig = {
@@ -35,17 +39,15 @@ const cfg: PublicConfig = {
   terms_version: "2026-08-22",
 };
 
-test("buyer header has no Offers tab and keeps brand + browse", () => {
+test("admin chrome has inventory and no Saved watchlist", () => {
   render(
     <ConfigProvider value={cfg}>
-      <MemoryRouter initialEntries={["/app/browse"]}>
+      <MemoryRouter initialEntries={["/admin/deals"]}>
         <Header />
       </MemoryRouter>
     </ConfigProvider>,
   );
-  expect(screen.getByText("Prairie Desk")).toBeInTheDocument();
-  expect(screen.getAllByRole("link", { name: "Browse" }).length).toBeGreaterThan(0);
-  expect(screen.queryByRole("link", { name: "Offers" })).not.toBeInTheDocument();
-  expect(screen.getAllByRole("link", { name: "Saved" }).length).toBeGreaterThan(0);
-  expect(screen.getByRole("button", { name: /log out/i })).toBeInTheDocument();
+  expect(screen.getAllByRole("link", { name: "Inventory" }).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole("link", { name: "Metrics" }).length).toBeGreaterThan(0);
+  expect(screen.queryAllByRole("link", { name: "Saved" })).toHaveLength(0);
 });

@@ -101,6 +101,8 @@ export interface DealAdmin extends DealPublic {
   contract_close_by: string | null;
   days_to_close: number | null;
   early_access_until?: string | null;
+  published_at?: string | null;
+  days_on_market?: number | null;
 }
 
 export interface MapPin {
@@ -122,18 +124,34 @@ export interface MarketManager {
   license: string;
   photo_url: string | null;
   market_ids: string[];
+  places?: { city: string; state: string; label: string; market_id?: string }[];
+}
+
+export interface PlaceOut {
+  city: string;
+  state: string;
+  lat: number;
+  lng: number;
+  timezone: string;
+  label: string;
 }
 
 export interface MarketOut {
   id: string;
   slug: string;
   name: string;
+  city?: string;
   state: string;
   center_lat: number;
   center_lng: number;
   zoom: number;
   timezone: string;
+  listing_count?: number;
   manager?: MarketManager | null;
+}
+
+export function marketLabel(m: { name: string; city?: string; state: string }): string {
+  return `${m.city || m.name}, ${m.state}`;
 }
 
 export interface HealthResponse {

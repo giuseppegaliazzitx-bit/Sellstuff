@@ -36,3 +36,14 @@ h3 {
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
 }
+
+.pin-single {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0 2px;
+  background: #c45c26;
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+}

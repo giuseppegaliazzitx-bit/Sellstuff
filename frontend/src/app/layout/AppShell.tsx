@@ -41,17 +41,22 @@ export function AppShell() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="flex flex-row flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-amber-900/10 bg-card px-4 py-6 text-center text-xs text-neutral-500">
+      <footer className="flex flex-row items-center justify-center gap-5 border-t border-amber-900/10 bg-card px-4 py-6 text-center text-xs text-neutral-500">
         <span>© {new Date().getFullYear()} {legal}. Off-market inventory.</span>
-        <a href="/privacy" className="text-gold">
-          Privacy
-        </a>
-        <a href="/terms" className="text-gold">
-          Terms
-        </a>
-        <a href="/disclosures" className="text-gold">
-          Disclosures
-        </a>
+        <nav aria-label="Legal" className="flex flex-row flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <a href="/privacy" className="text-gold">
+            Privacy Policy
+          </a>
+          <a href="/terms" className="text-gold">
+            Terms of Use
+          </a>
+          <a href="/privacy-ca" className="text-gold">
+            Privacy Policy for CA Residents
+          </a>
+          <a href="/do-not-sell" className="text-gold">
+            Do Not Sell My Personal Information
+          </a>
+        </nav>
       </footer>
     </div>
   );

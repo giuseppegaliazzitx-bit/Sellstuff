@@ -159,7 +159,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return auth
         storage = build_storage(request.app.state.settings)
         path = media_path(storage, key)
-        return FileResponse(path)
+        suffix = path.suffix.lower()
+        media_type = "image/jpeg" if suffix in {".jpg", ".jpeg"} else "image/png" if suffix == ".png" else None
+        return FileResponse(path, media_type=media_type)
 
     @app.get("/healthz", response_model=HealthResponse, tags=["ops"])
     async def healthz(request: Request) -> JSONResponse:

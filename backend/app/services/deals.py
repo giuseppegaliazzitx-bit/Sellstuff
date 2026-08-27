@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlparse
 
-from sqlalchemy import or_, select
+from sqlalchemy import and_, func, inspect as sa_inspect, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -27,6 +27,7 @@ from app.schemas.deals import (
     ManagerOut,
     MapPin,
     MarketOut,
+    ManagerPlace,
     PriceHistoryPublic,
 )
 from app.services.money import mao_cents, price_label
@@ -54,6 +55,13 @@ def _aware(value: datetime | None) -> datetime | None:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value
+
+
+def _days_on_market(deal: Deal) -> int | None:
+    pub = _aware(deal.published_at)
+    if pub is None:
+        return None
+    return max(0, int((_now() - pub).total_seconds() // 86400))
 
 
 def sanitize_video(url: str | None) -> str | None:
@@ -143,6 +151,8 @@ def to_admin(deal: Deal) -> DealAdmin:
         hud_fmr_cents=deal.hud_fmr_cents,
         days_to_close=days,
         early_access_until=deal.early_access_until,
+        published_at=deal.published_at,
+        days_on_market=_days_on_market(deal),
     )
 
 
@@ -241,12 +251,23 @@ async def list_admin_deals(session: AsyncSession, *, deleted: bool = False, q: s
 
 async def create_deal(session: AsyncSession, payload: DealCreate, actor_id: str) -> Deal:
     now = _now()
+    data = payload.model_dump()
+    city = str(data.get("city") or "").strip()
+    state = str(data.get("state") or "TX").strip().upper()
+    data["city"] = city
+    data["state"] = state
+    market = await ensure_market(session, city, state)
+    data["market_id"] = market.id
+    if data.get("lat") is None:
+        data["lat"] = market.center_lat
+    if data.get("lng") is None:
+        data["lng"] = market.center_lng
     deal = Deal(
         id=new_id(),
         created_at=now,
         updated_at=now,
         created_by=actor_id,
-        **payload.model_dump(),
+        **data,
     )
     if deal.status == "available":
         deal.published_at = now
@@ -333,6 +354,13 @@ async def patch_deal(
         )
     for key, value in data.items():
         setattr(deal, key, value)
+    if "city" in data or "state" in data:
+        market = await ensure_market(session, deal.city, deal.state)
+        deal.market_id = market.id
+        if deal.lat is None:
+            deal.lat = market.center_lat
+        if deal.lng is None:
+            deal.lng = market.center_lng
     deal.updated_at = now
     if diffs:
         session.add(
@@ -397,6 +425,12 @@ def manager_out(row, *, market_ids: list[str] | None = None) -> ManagerOut:
     photo = f"/media/{row.photo_key}" if row.photo_key else None
     if market_ids is None:
         market_ids = [m.id for m in getattr(row, "markets", None) or []]
+    places: list[ManagerPlace] = []
+    if "markets" not in sa_inspect(row).unloaded:
+        places = [
+            ManagerPlace(city=m.name, state=m.state, label=f"{m.name}, {m.state}", market_id=m.id)
+            for m in (row.markets or [])
+        ]
     return ManagerOut(
         id=row.id,
         name=row.name,
@@ -405,34 +439,164 @@ def manager_out(row, *, market_ids: list[str] | None = None) -> ManagerOut:
         license=row.license,
         photo_url=photo,
         market_ids=list(market_ids),
+        places=places,
     )
 
 
-def market_out(m: Market) -> MarketOut:
+def market_out(m: Market, listing_count: int = 0) -> MarketOut:
     mgr = m.manager
+    city = m.name
     return MarketOut(
         id=m.id,
         slug=m.slug,
         name=m.name,
+        city=city,
         state=m.state,
         center_lat=m.center_lat,
         center_lng=m.center_lng,
         zoom=m.zoom,
         timezone=m.timezone,
+        listing_count=listing_count,
         manager=manager_out(mgr, market_ids=[m.id]) if mgr else None,
     )
 
 
-async def list_markets(session: AsyncSession) -> list[Market]:
-    return list(
-        (
-            await session.execute(
-                select(Market).options(selectinload(Market.manager)).where(Market.is_active.is_(True))
+def market_slug(city: str, state: str) -> str:
+    raw = f"{city}-{state}".strip().lower()
+    out = []
+    prev_dash = False
+    for ch in raw:
+        if ch.isalnum():
+            out.append(ch)
+            prev_dash = False
+        elif not prev_dash:
+            out.append("-")
+            prev_dash = True
+    return "".join(out).strip("-")
+
+
+async def live_listing_counts(session: AsyncSession) -> dict[str, int]:
+    rows = (
+        await session.execute(
+            select(Deal.market_id, func.count())
+            .where(Deal.deleted_at.is_(None), Deal.status.in_(CLIENT_VISIBLE))
+            .group_by(Deal.market_id)
+        )
+    ).all()
+    return {mid: int(n) for mid, n in rows if mid}
+
+
+async def list_markets(
+    session: AsyncSession,
+    q: str | None = None,
+    *,
+    listed_only: bool = False,
+    include_inactive: bool = False,
+) -> list[Market]:
+    stmt = select(Market).options(selectinload(Market.manager))
+    if not include_inactive:
+        stmt = stmt.where(Market.is_active.is_(True))
+    if q and q.strip():
+        like = f"%{q.strip()}%"
+        stmt = stmt.where(or_(Market.name.ilike(like), Market.state.ilike(like), Market.slug.ilike(like)))
+    stmt = stmt.order_by(Market.state, Market.name)
+    rows = list((await session.execute(stmt)).scalars().all())
+    if listed_only:
+        counts = await live_listing_counts(session)
+        rows = [m for m in rows if counts.get(m.id, 0) > 0]
+    return rows
+
+
+async def ensure_market(session: AsyncSession, city: str, state: str) -> Market:
+    city = (city or "").strip()
+    state = (state or "").strip().upper()
+    if not city or not state:
+        raise AppError(422, "market_required", "City and state are required to place a listing")
+    existing = (
+        await session.execute(
+            select(Market).options(selectinload(Market.manager)).where(Market.name.ilike(city), Market.state == state)
+        )
+    ).scalar_one_or_none()
+    if existing:
+        if not existing.is_active:
+            existing.is_active = True
+            await session.flush()
+        return existing
+    from app.data.us_places import lookup_place
+
+    place = lookup_place(city, state)
+    slug = market_slug(place["city"] if place else city, state)
+    slug_hit = (
+        await session.execute(select(Market).options(selectinload(Market.manager)).where(Market.slug == slug))
+    ).scalar_one_or_none()
+    if slug_hit:
+        if not slug_hit.is_active:
+            slug_hit.is_active = True
+            await session.flush()
+        return slug_hit
+    row = Market(
+        id=new_id(),
+        slug=slug,
+        name=place["city"] if place else city.title(),
+        state=state,
+        center_lat=place["lat"] if place else 0.0,
+        center_lng=place["lng"] if place else 0.0,
+        zoom=11,
+        timezone=place["timezone"] if place else "America/Chicago",
+        is_active=True,
+    )
+    session.add(row)
+    await session.flush()
+    return row
+
+
+async def deactivate_market(session: AsyncSession, market_id: str) -> Market:
+    row = (
+        await session.execute(select(Market).options(selectinload(Market.manager)).where(Market.id == market_id))
+    ).scalar_one_or_none()
+    if row is None:
+        raise AppError(404, "not_found", "Market not found")
+    row.is_active = False
+    await session.commit()
+    return row
+
+
+async def create_market_from_place(session: AsyncSession, city: str, state: str) -> Market:
+    from app.data.us_places import lookup_place
+
+    place = lookup_place(city, state)
+    if not place:
+        raise AppError(422, "unknown_place", "City is not in the market dictionary")
+    slug = market_slug(place["city"], place["state"])
+    existing = (
+        await session.execute(
+            select(Market).where(
+                or_(
+                    Market.slug == slug,
+                    and_(Market.name.ilike(place["city"]), Market.state == place["state"]),
+                )
             )
         )
-        .scalars()
-        .all()
+    ).scalar_one_or_none()
+    if existing:
+        raise AppError(409, "market_exists", f"{place['label']} is already a market")
+    row = Market(
+        id=new_id(),
+        slug=slug,
+        name=place["city"],
+        state=place["state"],
+        center_lat=place["lat"],
+        center_lng=place["lng"],
+        zoom=11,
+        timezone=place["timezone"],
+        is_active=True,
     )
+    session.add(row)
+    await session.commit()
+    loaded = (
+        await session.execute(select(Market).options(selectinload(Market.manager)).where(Market.id == row.id))
+    ).scalar_one()
+    return loaded
 
 
 async def log_event(

@@ -17,6 +17,7 @@ import { BlastsPage } from "../features/admin/BlastsPage";
 import { PipelinePage } from "../features/admin/PipelinePage";
 import { MailboxPage } from "../features/admin/MailboxPage";
 import { ManagersPage } from "../features/admin/ManagersPage";
+import { MarketsPage } from "../features/admin/MarketsPage";
 import { DealEditorPage } from "../features/admin/DealEditorPage";
 import { BuyerDetailPage } from "../features/admin/BuyerDetailPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
@@ -34,7 +35,8 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "privacy", element: <LegalPage kind="privacy" /> },
       { path: "terms", element: <LegalPage kind="terms" /> },
-      { path: "disclosures", element: <LegalPage kind="disclosures" /> },
+      { path: "privacy-ca", element: <LegalPage kind="privacy-ca" /> },
+      { path: "do-not-sell", element: <LegalPage kind="do-not-sell" /> },
       { path: "verify", element: <VerifyPage /> },
       {
         element: <GuestOnly />,
@@ -74,6 +76,7 @@ export const router = createBrowserRouter([
           { path: "admin/offers", element: <PipelinePage /> },
           { path: "admin/mail", element: <MailboxPage /> },
           { path: "admin/managers", element: <ManagersPage /> },
+          { path: "admin/markets", element: <MarketsPage /> },
         ],
       },
     ],
