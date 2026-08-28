@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { formatUsd } from "../../shared/money";
 import type { DealPublic } from "../../shared/api/types";
 
@@ -11,7 +11,9 @@ export function DealCard({
   search?: string;
   onOpen?: (id: string) => void;
 }) {
+  const loc = useLocation();
   const href = `/app/deals/${deal.id}${search || ""}`;
+  const from = `${loc.pathname}${loc.search}`;
   const body = (
     <>
       <div className="relative flex h-40 flex-col bg-chip">
@@ -59,7 +61,7 @@ export function DealCard({
     );
   }
   return (
-    <Link to={href} className={cls} data-testid="deal-card">
+    <Link to={href} state={{ from }} className={cls} data-testid="deal-card">
       {body}
     </Link>
   );

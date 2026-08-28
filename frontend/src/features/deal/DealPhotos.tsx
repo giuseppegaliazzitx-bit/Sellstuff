@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 
 function EmptySlot() {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-chip text-xs uppercase tracking-wide text-neutral-500">
+    <div className="absolute inset-0 flex items-center justify-center bg-chip px-2 text-center text-xs uppercase leading-tight tracking-wide text-neutral-500">
       No Available Photos
     </div>
   );
@@ -50,7 +50,7 @@ export function DealPhotos({ photos }: { photos: string[] }) {
         </div>
         <div className="grid h-full w-[220px] shrink-0 grid-cols-2 grid-rows-2 gap-1 md:w-[338px]">
           {thumbs.map((src, i) => (
-            <div key={i} className="relative min-h-0 min-w-0 overflow-hidden bg-chip" data-testid="image-grid">
+            <div key={i} className="relative h-full min-h-0 min-w-0 overflow-hidden bg-chip" data-testid="image-grid">
               {src ? (
                 <button type="button" className="absolute inset-0 cursor-pointer" onClick={() => setIndex(i + 1)}>
                   <img src={src} alt="grid image" className="h-full w-full object-cover" />

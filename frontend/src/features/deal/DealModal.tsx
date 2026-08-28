@@ -6,10 +6,12 @@ export function DealModal({
   dealId,
   onClose,
   manager = null,
+  backLabel,
 }: {
   dealId: string;
   onClose: () => void;
   manager?: MarketManager | null;
+  backLabel?: string;
 }) {
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -37,7 +39,7 @@ export function DealModal({
         className="flex min-h-full w-full max-w-[1000px] flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <DealView id={dealId} variant="modal" onClose={onClose} manager={manager} />
+        <DealView id={dealId} variant="modal" onClose={onClose} manager={manager} backLabel={backLabel} />
       </div>
     </div>
   );

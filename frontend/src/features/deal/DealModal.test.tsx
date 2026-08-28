@@ -127,6 +127,21 @@ test("Back to Browse closes the overlay", async () => {
   expect(onClose).toHaveBeenCalled();
 });
 
+test("Back to Saved label is used when opened from the watchlist", async () => {
+  const onClose = vi.fn();
+  render(
+    <ConfigProvider value={cfg}>
+      <MemoryRouter>
+        <DealModal dealId="1" onClose={onClose} manager={manager} backLabel="Back to Saved" />
+      </MemoryRouter>
+    </ConfigProvider>,
+  );
+  await screen.findByTestId("deal-page-stack");
+  fireEvent.click(screen.getByRole("button", { name: /back to saved/i }));
+  expect(onClose).toHaveBeenCalled();
+  expect(screen.queryByRole("button", { name: /back to browse/i })).not.toBeInTheDocument();
+});
+
 test("Escape closes the overlay when the lightbox is not open", async () => {
   const onClose = renderModal();
   await screen.findByTestId("deal-page-stack");

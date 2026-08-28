@@ -12,7 +12,11 @@ test("hero is on the left and four squares sit on the right", () => {
 
 test("empty squares show a placeholder", () => {
   render(<DealPhotos photos={["/a.jpg"]} />);
-  expect(screen.getAllByText("No Available Photos")).toHaveLength(4);
+  const placeholders = screen.getAllByText("No Available Photos");
+  expect(placeholders).toHaveLength(4);
+  expect(placeholders[0].className).toMatch(/items-center/);
+  expect(placeholders[0].className).toMatch(/justify-center/);
+  expect(placeholders[0].className).toMatch(/absolute inset-0/);
 });
 
 test("a listing with no photos still shows the hero and four empty squares", () => {

@@ -15,16 +15,28 @@ export function DealPage() {
   return <DealView id={id} />;
 }
 
+function backFromLocation(loc: ReturnType<typeof useLocation>) {
+  const from = (loc.state as { from?: string } | null)?.from;
+  if (from && from.startsWith("/app/") && !from.startsWith("/app/deals")) return from;
+  return `/app/browse${loc.search}`;
+}
+
+function labelForBack(path: string) {
+  return path.startsWith("/app/saved") ? "Back to Saved" : "Back to Browse";
+}
+
 export function DealView({
   id,
   variant = "page",
   onClose,
   manager: managerProp,
+  backLabel,
 }: {
   id: string;
   variant?: "page" | "modal";
   onClose?: () => void;
   manager?: MarketManager | null;
+  backLabel?: string;
 }) {
   const loc = useLocation();
   const { user } = useAuth();
@@ -33,7 +45,8 @@ export function DealView({
   const [error, setError] = useState<string | null>(null);
   const [docs, setDocs] = useState<{ id: string; kind: string; filename: string }[]>([]);
   const [fetchedManager, setFetchedManager] = useState<MarketManager | null>(null);
-  const back = `/app/browse${loc.search}`;
+  const back = backFromLocation(loc);
+  const backText = backLabel ?? labelForBack(back);
   const manager = managerProp === undefined ? fetchedManager : managerProp;
 
   useEffect(() => {
@@ -82,12 +95,12 @@ export function DealView({
             onClick={onClose}
           >
             <BackArrow />
-            Back to Browse
+            {backText}
           </button>
         ) : (
           <Link to={back} className="flex shrink-0 flex-row items-center gap-1 text-sm text-white">
             <BackArrow />
-            Back to Browse
+            {backText}
           </Link>
         )}
         <div className="min-w-0 flex-1" data-testid="market-agent-card">
